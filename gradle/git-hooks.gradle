@@ -1,0 +1,28 @@
+tasks.register('installGitHooks', Copy) {
+    from new File(rootProject.rootDir, 'config/git-hook/pre-push')
+    into {
+        new File(rootProject.rootDir, '.git/hooks')
+    }
+    fileMode 0755
+
+    from new File(rootProject.rootDir, 'config/git-hook/commit-msg')
+    into {
+        new File(rootProject.rootDir, '.git/hooks')
+    }
+    fileMode 0755
+
+    from new File(rootProject.rootDir, 'config/git-hook/pre-commit')
+    into {
+        new File(rootProject.rootDir, '.git/hooks')
+    }
+    fileMode 0755
+
+    from new File(rootProject.rootDir, 'config/git-hook/talisman')
+    into {
+        new File(rootProject.rootDir, '.git/hooks')
+    }
+    fileMode 0755
+
+}
+
+build.dependsOn installGitHooks
