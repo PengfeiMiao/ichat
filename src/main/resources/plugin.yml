@@ -7,7 +7,4 @@ version: 1.0
 # 作者列表
 authors:
   - 'mafia'
-# 描述
-commands:
-  - "gpt"
 description: '这是一个示例插件'

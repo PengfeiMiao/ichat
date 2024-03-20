@@ -1,23 +1,22 @@
 package com.mafiadev.ichat.gpt;
 
-
 import com.mafiadev.ichat.Claptrap;
 import com.meteor.wechatbc.entitiy.message.Message;
 import com.meteor.wechatbc.event.EventHandler;
 import com.meteor.wechatbc.impl.event.Listener;
 import com.meteor.wechatbc.impl.event.sub.ReceiveMessageEvent;
-import dev.ai4j.openai4j.OpenAiClient;
-import dev.ai4j.openai4j.chat.ChatCompletionRequest;
-import dev.ai4j.openai4j.image.GenerateImagesRequest;
-import dev.ai4j.openai4j.image.GenerateImagesResponse;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
+import java.util.Map;
 import java.util.Optional;
-
-import static dev.ai4j.openai4j.chat.ChatCompletionModel.GPT_3_5_TURBO;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class GptListener implements Listener {
 
     private final Claptrap plugin;
+
+    private static final Map<String, Boolean> sessionHashMap = new ConcurrentHashMap<>();
 
     public GptListener(Claptrap plugin) {
         this.plugin = plugin;
@@ -34,39 +33,33 @@ public class GptListener implements Listener {
         TEXT, IMAGE
     }
 
+    @AllArgsConstructor
+    @Data
     public static class Request {
         private AnswerType answerType;
         private String prompt;
-
-        public Request(AnswerType answerType, String prompt) {
-            this.answerType = answerType;
-            this.prompt = prompt;
-        }
-
-        public AnswerType getAnswerType() {
-            return answerType;
-        }
-
-        public void setAnswerType(AnswerType answerType) {
-            this.answerType = answerType;
-        }
-
-        public String getPrompt() {
-            return prompt;
-        }
-
-        public void setPrompt(String prompt) {
-            this.prompt = prompt;
-        }
     }
 
-    public Request getRequest(String mes) {
-        if (mes.startsWith("ai ")) {
-            return new Request(AnswerType.TEXT, mes.replace("ai ", ""));
-        } else if (mes.startsWith("draw ")) {
-            return new Request(AnswerType.IMAGE, mes.replace("draw ", ""));
+    public boolean initSession(Message message, String msg) {
+        String fromUserName = message.getFromUserName();
+        if (msg.startsWith("\\gpt")) {
+            msg = msg.replace("\\gpt", "").trim();
+            if (msg.startsWith("start")) {
+                plugin.getWeChatClient().getWeChatCore().getHttpAPI().sendMessage(fromUserName, "gpt bot");
+                sessionHashMap.put(fromUserName, true);
+            }
+            if (msg.startsWith("end")) {
+                sessionHashMap.put(fromUserName, false);
+            }
         }
-        return null;
+        return sessionHashMap.getOrDefault(fromUserName, false);
+    }
+
+    public Request getRequest(String msg) {
+        if (msg.startsWith("#image")) {
+            return new Request(AnswerType.IMAGE, msg.replaceFirst("#image", "").trim());
+        }
+        return new Request(AnswerType.TEXT, msg);
     }
 
     @EventHandler
@@ -75,35 +68,18 @@ public class GptListener implements Listener {
         String content = receiveMessageEvent.getContent();
 
         String senderUserName = message.getSenderUserName();
-        if (senderUserName == null) {
+        if (senderUserName == null || !initSession(message, content)) {
             return;
         }
 
         Optional<Request> optionalRequest = Optional.ofNullable(getRequest(content));
 
         optionalRequest.ifPresent(request -> {
-            OpenAiClient client = GptService.INSTANCE.getClient(senderUserName);
-            if (request.getAnswerType() == AnswerType.TEXT) {
-                ChatCompletionRequest chatCompletionRequest = ChatCompletionRequest.builder()
-                        .model(GptService.enable40Map.getOrDefault(senderUserName, GPT_3_5_TURBO))
-                        .addUserMessage(request.getPrompt())
-                        .build();
-
-                String execute = client.chatCompletion(chatCompletionRequest).execute().content();
-
-                plugin.getWeChatClient().getWeChatCore().getHttpAPI().sendMessage(message.getFromUserName(), execute);
-            }
-            else {
-                GenerateImagesRequest generateImagesRequest = GenerateImagesRequest.builder()
-                        .prompt(request.getPrompt())
-                        .build();
-                client.imagesGeneration(generateImagesRequest)
-                        .onResponse(generateImagesResponse -> {
-                            for (GenerateImagesResponse.ImageData datum : generateImagesResponse.data()) {
-                                System.out.println(datum.b64Json());
-                            }
-                        });
-            }
+            String prompt = request.getPrompt();
+            String result = request.getAnswerType() == AnswerType.TEXT
+                    ? GptService.INSTANCE.textDialog(senderUserName, prompt)
+                    : GptService.INSTANCE.imageDialog(senderUserName, prompt);
+            plugin.getWeChatClient().getWeChatCore().getHttpAPI().sendMessage(message.getFromUserName(), result);
         });
     }
 
