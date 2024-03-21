@@ -17,6 +17,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static dev.ai4j.openai4j.image.ImageModel.DALL_E_2;
+import static dev.ai4j.openai4j.image.ImageModel.DALL_E_SIZE_256_x_256;
 import static java.time.Duration.ofSeconds;
 
 public class GptService {
@@ -66,6 +68,8 @@ public class GptService {
         OpenAiClient client = session.getClient();
         GenerateImagesRequest request = GenerateImagesRequest
                 .builder()
+                .model(DALL_E_2)
+                .size(DALL_E_SIZE_256_x_256)
                 .prompt(userMsg)
                 .build();
 
@@ -129,7 +133,7 @@ public class GptService {
         String testUser = "testUser";
         OpenAiClient client = service.buildClient(testUser);
         sessionHashMap.put(testUser, new GptSession(testUser, true, client, null));
-        service.imageDialog(sessionHashMap.get(testUser), "draw a bird");
+        System.out.println(service.imageDialog(sessionHashMap.get(testUser), "draw a bird"));
         service.clear(testUser);
     }
 }
