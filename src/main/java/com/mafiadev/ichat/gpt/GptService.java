@@ -1,6 +1,7 @@
 package com.mafiadev.ichat.gpt;
 
 import com.mafiadev.ichat.Claptrap;
+import com.mafiadev.ichat.util.URIToPNGConverter;
 import dev.ai4j.openai4j.OpenAiClient;
 import dev.ai4j.openai4j.chat.ChatCompletionRequest;
 import dev.ai4j.openai4j.chat.Message;
@@ -9,6 +10,7 @@ import dev.ai4j.openai4j.chat.UserMessage;
 import dev.ai4j.openai4j.image.GenerateImagesRequest;
 import dev.ai4j.openai4j.image.GenerateImagesResponse;
 
+import java.io.File;
 import java.net.URI;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -18,8 +20,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static dev.ai4j.openai4j.image.ImageModel.DALL_E_2;
-import static dev.ai4j.openai4j.image.ImageModel.DALL_E_SIZE_256_x_256;
-import static java.time.Duration.ofSeconds;
+import static dev.ai4j.openai4j.image.ImageModel.DALL_E_RESPONSE_FORMAT_B64_JSON;
 
 public class GptService {
 
@@ -43,7 +44,9 @@ public class GptService {
             return sessionHashMap.get(userName);
         }
         GptSession session = sessionHashMap.get(userName);
-        session.setTips(null);
+        if (session != null) {
+            session.setTips(null);
+        }
         return session;
     }
 
@@ -64,29 +67,28 @@ public class GptService {
         return systemMsg;
     }
 
-    public String imageDialog(GptSession session, String userMsg) {
+    public File imageDialog(GptSession session, String userMsg) {
         OpenAiClient client = session.getClient();
         GenerateImagesRequest request = GenerateImagesRequest
                 .builder()
                 .model(DALL_E_2)
-                .size(DALL_E_SIZE_256_x_256)
+                .responseFormat(DALL_E_RESPONSE_FORMAT_B64_JSON)
                 .prompt(userMsg)
                 .build();
 
         GenerateImagesResponse response = client.imagesGeneration(request).execute();
+        URI localImage = response.data().get(0).url();
 
-        URI remoteImage = response.data().get(0).url();
-
-        return remoteImage.toString();
+        return URIToPNGConverter.convert(localImage);
     }
 
     private void login(String userName) {
-        sessionHashMap.put(userName, new GptSession(userName, true, buildClient(userName), "gpt startup"));
+        sessionHashMap.put(userName, new GptSession(userName, true, buildClient(userName), null));
     }
 
     private void clearHistory(String userName) {
         GptSession session = sessionHashMap.get(userName);
-        session.setMessages(new ArrayList<>());
+        session.setMessages(GptSession.defaultMessages);
         session.setTips("cleared");
         sessionHashMap.put(userName, session);
     }
@@ -105,10 +107,12 @@ public class GptService {
                 .baseUrl(BASE_URL)
                 .openAiApiKey(KEY)
                 .callTimeout(Duration.ofSeconds(60))
-                .connectTimeout(ofSeconds(60))
-                .readTimeout(ofSeconds(60))
+                .connectTimeout(Duration.ofSeconds(60))
+                .readTimeout(Duration.ofSeconds(60))
+                .writeTimeout(Duration.ofSeconds(60))
                 .organizationId(UUID.randomUUID().toString())
-                .writeTimeout(ofSeconds(60)).build();
+                .withPersisting()
+                .build();
     }
 
     private GptService(Claptrap plugin) {
@@ -133,7 +137,7 @@ public class GptService {
         String testUser = "testUser";
         OpenAiClient client = service.buildClient(testUser);
         sessionHashMap.put(testUser, new GptSession(testUser, true, client, null));
-        System.out.println(service.imageDialog(sessionHashMap.get(testUser), "draw a bird"));
+        service.imageDialog(sessionHashMap.get(testUser), "draw a cat");
         service.clear(testUser);
     }
 }

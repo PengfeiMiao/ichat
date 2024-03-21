@@ -9,6 +9,7 @@ import com.meteor.wechatbc.impl.event.sub.ReceiveMessageEvent;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.io.File;
 import java.util.Optional;
 
 public class GptListener implements Listener {
@@ -54,6 +55,7 @@ public class GptListener implements Listener {
 
         String senderUserName = message.getSenderUserName() == null ?
                 message.getSenderUserName() : message.getFromUserName();
+
         GptSession gptSession = GptService.INSTANCE.initSession(senderUserName, content);
 
         if (senderUserName == null || gptSession == null) {
@@ -69,10 +71,13 @@ public class GptListener implements Listener {
         Optional<Request> optionalRequest = Optional.ofNullable(getRequest(content));
         optionalRequest.ifPresent(request -> {
             String prompt = request.getPrompt();
-            String result = request.getAnswerType() == AnswerType.TEXT
-                    ? GptService.INSTANCE.textDialog(gptSession, prompt)
-                    : GptService.INSTANCE.imageDialog(gptSession, prompt);
-            sender.sendMessage(senderUserName, result);
+            if (request.getAnswerType() == AnswerType.TEXT) {
+                String text = GptService.INSTANCE.textDialog(gptSession, prompt);
+                sender.sendMessage(senderUserName, text);
+            } else {
+                File image = GptService.INSTANCE.imageDialog(gptSession, prompt);
+                sender.sendImage(senderUserName, image);
+            }
         });
     }
 
