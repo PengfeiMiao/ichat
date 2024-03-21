@@ -3,23 +3,23 @@ package com.mafiadev.ichat.gpt;
 import com.mafiadev.ichat.Claptrap;
 import com.meteor.wechatbc.entitiy.message.Message;
 import com.meteor.wechatbc.event.EventHandler;
+import com.meteor.wechatbc.impl.HttpAPI;
 import com.meteor.wechatbc.impl.event.Listener;
 import com.meteor.wechatbc.impl.event.sub.ReceiveMessageEvent;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class GptListener implements Listener {
 
     private final Claptrap plugin;
 
-    private static final Map<String, Boolean> sessionHashMap = new ConcurrentHashMap<>();
+    private final HttpAPI sender;
 
     public GptListener(Claptrap plugin) {
         this.plugin = plugin;
+        this.sender = plugin.getWeChatClient().getWeChatCore().getHttpAPI();
     }
 
     /**
@@ -40,21 +40,6 @@ public class GptListener implements Listener {
         private String prompt;
     }
 
-    public boolean initSession(Message message, String msg) {
-        String fromUserName = message.getFromUserName();
-        if (msg.startsWith("\\gpt")) {
-            msg = msg.replace("\\gpt", "").trim();
-            if (msg.startsWith("start")) {
-                plugin.getWeChatClient().getWeChatCore().getHttpAPI().sendMessage(fromUserName, "gpt bot");
-                sessionHashMap.put(fromUserName, true);
-            }
-            if (msg.startsWith("end")) {
-                sessionHashMap.put(fromUserName, false);
-            }
-        }
-        return sessionHashMap.getOrDefault(fromUserName, false);
-    }
-
     public Request getRequest(String msg) {
         if (msg.startsWith("#image")) {
             return new Request(AnswerType.IMAGE, msg.replaceFirst("#image", "").trim());
@@ -67,19 +52,27 @@ public class GptListener implements Listener {
         Message message = receiveMessageEvent.getMessage();
         String content = receiveMessageEvent.getContent();
 
-        String senderUserName = message.getSenderUserName();
-        if (senderUserName == null || !initSession(message, content)) {
+        String senderUserName = message.getSenderUserName() == null ?
+                message.getSenderUserName() : message.getFromUserName();
+        GptSession gptSession = GptService.INSTANCE.initSession(senderUserName, content);
+
+        if (senderUserName == null || gptSession == null) {
+            return;
+        }
+        if (gptSession.getTips() != null) {
+            sender.sendMessage(senderUserName, gptSession.getTips());
+        }
+        if (!gptSession.getLogin()) {
             return;
         }
 
         Optional<Request> optionalRequest = Optional.ofNullable(getRequest(content));
-
         optionalRequest.ifPresent(request -> {
             String prompt = request.getPrompt();
             String result = request.getAnswerType() == AnswerType.TEXT
-                    ? GptService.INSTANCE.textDialog(senderUserName, prompt)
-                    : GptService.INSTANCE.imageDialog(senderUserName, prompt);
-            plugin.getWeChatClient().getWeChatCore().getHttpAPI().sendMessage(message.getFromUserName(), result);
+                    ? GptService.INSTANCE.textDialog(gptSession, prompt)
+                    : GptService.INSTANCE.imageDialog(gptSession, prompt);
+            sender.sendMessage(senderUserName, result);
         });
     }
 
