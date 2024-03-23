@@ -76,8 +76,13 @@ public class GptListener implements Listener {
         Message message = receiveMessageEvent.getMessage();
         String content = receiveMessageEvent.getContent();
 
-        String senderUserName = message.getSenderUserName() == null ?
-                message.getSenderUserName() : message.getFromUserName();
+        String senderUserName;
+        try {
+            senderUserName = message.getSenderUserName() == null ?
+                    message.getSenderUserName() : message.getFromUserName();
+        } catch (Exception e) {
+            return;
+        }
 
         GptSession gptSession = GptService.INSTANCE.initSession(senderUserName, content);
 
