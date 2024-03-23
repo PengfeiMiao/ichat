@@ -39,4 +39,15 @@ public class GptSession {
         this.client = client;
         this.tips = tips;
     }
+
+    public void clear() {
+        this.setMessages(defaultMessages);
+    }
+
+    public void reset() {
+        this.getClient().shutdown();
+        this.setClient(null);
+        this.setLogin(false);
+        this.setTips("bye");
+    }
 }

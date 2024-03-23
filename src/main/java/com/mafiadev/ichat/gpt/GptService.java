@@ -1,7 +1,7 @@
 package com.mafiadev.ichat.gpt;
 
 import com.mafiadev.ichat.Claptrap;
-import com.mafiadev.ichat.util.URIToPNGConverter;
+import com.mafiadev.ichat.util.FileUtil;
 import dev.ai4j.openai4j.OpenAiClient;
 import dev.ai4j.openai4j.chat.ChatCompletionRequest;
 import dev.ai4j.openai4j.chat.Message;
@@ -12,6 +12,8 @@ import dev.ai4j.openai4j.image.GenerateImagesResponse;
 
 import java.io.File;
 import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,27 +25,27 @@ import static dev.ai4j.openai4j.image.ImageModel.DALL_E_2;
 import static dev.ai4j.openai4j.image.ImageModel.DALL_E_RESPONSE_FORMAT_B64_JSON;
 
 public class GptService {
-
     private final String KEY;
     private final String BASE_URL;
-
     private static final Map<String, GptSession> sessionHashMap = new ConcurrentHashMap<>();
+    private static final int MAX_HISTORY = 200;
+    private static final Path FILE_PATH = Paths.get(System.getProperty("java.io.tmpdir"));
 
     public GptSession initSession(String userName, String msg) {
+        GptSession session = sessionHashMap.get(userName);
         if (msg.startsWith("\\gpt")) {
             msg = msg.replace("\\gpt", "").trim();
             if (msg.startsWith("start")) {
-                login(userName);
+                session = login(userName, buildClient(userName));
             }
             if (msg.startsWith("clear")) {
-                clearHistory(userName);
+                session.clear();
             }
             if (msg.startsWith("end")) {
-                clear(userName);
+                session.reset();
             }
-            return sessionHashMap.get(userName);
+            return session;
         }
-        GptSession session = sessionHashMap.get(userName);
         if (session != null) {
             session.setTips(null);
         }
@@ -61,8 +63,10 @@ public class GptService {
 
         String systemMsg = client.chatCompletion(chatCompletionRequest).execute().content();
         messages.add(SystemMessage.from(systemMsg));
+        if (messages.size() > MAX_HISTORY) {
+            messages.subList(0, MAX_HISTORY / 2).clear();
+        }
         session.setMessages(messages);
-        sessionHashMap.put(session.getUserName(), session);
 
         return systemMsg;
     }
@@ -76,30 +80,17 @@ public class GptService {
                 .prompt(userMsg)
                 .build();
 
+        FileUtil.pngCleaner(FILE_PATH);
         GenerateImagesResponse response = client.imagesGeneration(request).execute();
         URI localImage = response.data().get(0).url();
 
-        return URIToPNGConverter.convert(localImage);
+        return FileUtil.pngConverter(localImage);
     }
 
-    private void login(String userName) {
-        sessionHashMap.put(userName, new GptSession(userName, true, buildClient(userName), null));
-    }
-
-    private void clearHistory(String userName) {
-        GptSession session = sessionHashMap.get(userName);
-        session.setMessages(GptSession.defaultMessages);
-        session.setTips("cleared");
+    private GptSession login(String userName, OpenAiClient client) {
+        GptSession session = new GptSession(userName, true, client, null);
         sessionHashMap.put(userName, session);
-    }
-
-    private void clear(String userName) {
-        GptSession session = sessionHashMap.get(userName);
-        session.getClient().shutdown();
-        session.setClient(null);
-        session.setLogin(false);
-        session.setTips("bye");
-        sessionHashMap.put(userName, session);
+        return session;
     }
 
     private OpenAiClient buildClient(String userName) {
@@ -112,6 +103,7 @@ public class GptService {
                 .writeTimeout(Duration.ofSeconds(60))
                 .organizationId(UUID.randomUUID().toString())
                 .withPersisting()
+                .persistTo(FILE_PATH)
                 .build();
     }
 
@@ -136,8 +128,22 @@ public class GptService {
         GptService service = new GptService();
         String testUser = "testUser";
         OpenAiClient client = service.buildClient(testUser);
-        sessionHashMap.put(testUser, new GptSession(testUser, true, client, null));
-        service.imageDialog(sessionHashMap.get(testUser), "draw a cat");
-        service.clear(testUser);
+        service.login(testUser, client);
+        GptSession session = sessionHashMap.get(testUser);
+        session.setMessages(new ArrayList<>());
+
+        session.clear();
+        System.out.println("clear");
+        System.out.println(sessionHashMap.get(testUser).getMessages());
+
+        service.textDialog(session, "123");
+        System.out.println("textDialog");
+        System.out.println(sessionHashMap.get(testUser).getMessages());
+
+        session.reset();
+        System.out.println("logout");
+        System.out.println(sessionHashMap.get(testUser).getLogin());
+        System.out.println(sessionHashMap.get(testUser).getMessages());
+        System.out.println(sessionHashMap.get(testUser).getTips());
     }
 }
