@@ -1,6 +1,9 @@
 package com.mafiadev.ichat.util;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,7 +31,7 @@ public class FileUtil {
     }
 
     public static void pngCleaner(Path path) {
-        try (Stream<Path> stream = Files.walk(path)) {
+        try (Stream<Path> stream = Files.list(path)) {
             stream.filter(Files::isRegularFile)
                     .filter(file -> file.toString().endsWith(".png"))
                     .forEach(file -> {
@@ -38,6 +41,14 @@ public class FileUtil {
                             e.printStackTrace();
                         }
                     });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void mkDir(Path path) {
+        try {
+            Files.createDirectories(path);
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -1,6 +1,8 @@
 package com.mafiadev.ichat;
 
-import com.mafiadev.ichat.gpt.GptService;
+import com.mafiadev.ichat.constant.Constant;
+import com.mafiadev.ichat.gpt.GptListener;
+import com.mafiadev.ichat.util.FileUtil;
 import com.meteor.wechatbc.impl.plugin.BasePlugin;
 
 public class Claptrap extends BasePlugin {
@@ -10,7 +12,8 @@ public class Claptrap extends BasePlugin {
 
     @Override
     public void onEnable() {
+        FileUtil.mkDir(Constant.FILE_PATH);
         this.saveDefaultConfig();
-        GptService.init(this);
+        new GptListener(this).register();
     }
 }

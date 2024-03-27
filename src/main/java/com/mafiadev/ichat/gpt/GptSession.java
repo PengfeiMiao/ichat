@@ -1,9 +1,9 @@
 package com.mafiadev.ichat.gpt;
 
-import dev.ai4j.openai4j.OpenAiClient;
-import dev.ai4j.openai4j.chat.ChatCompletionModel;
-import dev.ai4j.openai4j.chat.Message;
-import dev.ai4j.openai4j.chat.SystemMessage;
+import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.image.ImageModel;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -11,7 +11,7 @@ import java.util.List;
 
 @Data
 public class GptSession {
-    public static final List<Message> defaultMessages = new ArrayList<>();
+    public static final List<ChatMessage> defaultMessages = new ArrayList<>();
     static {
         defaultMessages.add(SystemMessage.from(
                 "- 当我询问`如何使用机器人`或 `如何使用AI Bot`等类似问题时，请给出如下帮助文档:\n" +
@@ -28,15 +28,16 @@ public class GptSession {
 
     String userName;
     Boolean login;
-    List<Message> messages = defaultMessages;
-    ChatCompletionModel model = ChatCompletionModel.GPT_3_5_TURBO;
-    OpenAiClient client;
+    List<ChatMessage> messages = defaultMessages;
+    ChatLanguageModel chatModel;
+    ImageModel imageModel;
     String tips;
 
-    public GptSession(String userName, Boolean login, OpenAiClient client, String tips) {
+    public GptSession(String userName, Boolean login, ChatLanguageModel chatModel, ImageModel imageModel, String tips) {
         this.userName = userName;
         this.login = login;
-        this.client = client;
+        this.chatModel = chatModel;
+        this.imageModel = imageModel;
         this.tips = tips;
     }
 
@@ -45,8 +46,8 @@ public class GptSession {
     }
 
     public void reset() {
-        this.getClient().shutdown();
-        this.setClient(null);
+        this.setChatModel(null);
+        this.setImageModel(null);
         this.setLogin(false);
         this.setTips("bye");
     }
