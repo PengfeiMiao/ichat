@@ -16,10 +16,9 @@ apply from: "${rootProject.projectDir}/gradle/git-hooks.gradle"
 dependencies {
 	implementation 'dev.langchain4j:langchain4j:0.29.0'
 	implementation 'dev.langchain4j:langchain4j-open-ai:0.29.0'
+//	implementation 'dev.langchain4j:langchain4j-easy-rag:0.29.0'
 	implementation files('./libs/wechat-bc-1.1.9-SNAPSHOT.jar')
 
-//	implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
-//	implementation 'com.squareup.retrofit2:converter-scalars:2.9.0'
 	implementation 'org.slf4j:slf4j-api:2.0.12'
 
 	compileOnly 'org.projectlombok:lombok:1.18.28'

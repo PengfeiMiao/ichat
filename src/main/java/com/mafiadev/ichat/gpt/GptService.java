@@ -1,18 +1,19 @@
 package com.mafiadev.ichat.gpt;
 
 import com.mafiadev.ichat.Claptrap;
+import com.mafiadev.ichat.gpt.agent.Assistant;
+import com.mafiadev.ichat.gpt.tool.WebPageTool;
 import com.mafiadev.ichat.util.FileUtil;
-import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.image.ImageModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiImageModel;
+import dev.langchain4j.service.AiServices;
 
 import java.io.File;
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,10 +27,9 @@ public class GptService {
     }
 
     private static final Map<String, GptSession> sessionHashMap = new ConcurrentHashMap<>();
-    private static final int MAX_HISTORY = 200;
 
-    public final String BASE_URL;
-    public final String KEY;
+    private final String BASE_URL;
+    private final String KEY;
 
     private GptService(Claptrap plugin) {
         this.BASE_URL = plugin.getConfig().getString("baseUrl");
@@ -59,17 +59,20 @@ public class GptService {
 
     public String textDialog(GptSession session, String userMsg) {
         ChatLanguageModel chatModel = session.getChatModel();
-        List<ChatMessage> messages = session.getMessages();
-        messages.add(UserMessage.from(userMsg));
-
-        String systemMsg = chatModel.generate(messages).content().text();
-
-        messages.add(SystemMessage.from(systemMsg));
-        if (messages.size() > MAX_HISTORY) {
-            messages.subList(0, MAX_HISTORY / 2).clear();
+        String userName = session.userName;
+        Assistant assistant = AiServices.builder(Assistant.class)
+                .chatLanguageModel(chatModel)
+                .tools(new WebPageTool())
+                .chatMemoryProvider(memoryId -> session.getChatMemory())
+                .build();
+        System.out.println("getChatMemory: " + session.getChatMemory().messages());
+        try {
+            return assistant.chat(userName, userMsg);
+        } catch (Exception e) {
+            return chatModel.generate(
+                    SystemMessage.from("如果我请求获取最新信息或明确请求使用搜索引擎，告知我搜索失败，返回的答案不具有时效性"),
+                    UserMessage.from(userMsg)).content().text();
         }
-        session.setMessages(messages);
-        return systemMsg;
     }
 
     public File imageDialog(GptSession session, String userMsg) {
@@ -95,5 +98,17 @@ public class GptService {
         GptSession session = new GptSession(userName, true, chatModel, imageModel, null);
         sessionHashMap.put(userName, session);
         return session;
+    }
+
+    public GptService() {
+        this.BASE_URL = System.getenv("AI_URL");
+        this.KEY = System.getenv("AI_KEY");
+    }
+
+    public static void main(String[] args) {
+        String question = "用搜狗帮我搜索，《菊花台》是谁的歌";
+        GptService gptService = new GptService();
+        GptSession gptSession = gptService.login("test");
+        System.out.println(gptService.textDialog(gptSession, question));
     }
 }
