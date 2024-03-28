@@ -65,7 +65,6 @@ public class GptService {
                 .tools(new WebPageTool())
                 .chatMemoryProvider(memoryId -> session.getChatMemory())
                 .build();
-        System.out.println("getChatMemory: " + session.getChatMemory().messages());
         try {
             return assistant.chat(userName, userMsg);
         } catch (Exception e) {
