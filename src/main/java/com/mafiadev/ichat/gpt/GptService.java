@@ -85,6 +85,7 @@ public class GptService {
         ChatLanguageModel chatModel = OpenAiChatModel.builder()
                 .baseUrl(BASE_URL)
                 .apiKey(KEY)
+                .modelName("gpt-3.5-turbo")
                 .build();
         ImageModel imageModel = OpenAiImageModel.builder()
                 .baseUrl(BASE_URL)
@@ -105,7 +106,7 @@ public class GptService {
     }
 
     public static void main(String[] args) {
-        String question = "用搜狗帮我搜索，《菊花台》是谁的歌";
+        String question = "今日微博热搜";
         GptService gptService = new GptService();
         GptSession gptSession = gptService.login("test");
         System.out.println(gptService.textDialog(gptSession, question));

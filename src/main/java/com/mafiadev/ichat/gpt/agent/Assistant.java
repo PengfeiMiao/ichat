@@ -16,7 +16,8 @@ public interface Assistant {
             "3) \\gpt clear: 清空会话记录\n" +
             "4) #image + 文本: 图片生成请求，需要在会话中执行才可生效\n" +
             "```",
-            "当遇到`start`时，请给出欢迎提示"
+            "当遇到`start`时，请给出欢迎提示",
+            "当查询微博热搜时，返回格式：标题 + link + 换行"
     })
     String chat(@MemoryId @UserName String userName, @UserMessage String message);
 }
