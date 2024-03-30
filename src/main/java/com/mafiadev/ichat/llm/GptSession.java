@@ -1,7 +1,5 @@
-package com.mafiadev.ichat.gpt;
+package com.mafiadev.ichat.llm;
 
-import dev.langchain4j.memory.ChatMemory;
-import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.image.ImageModel;
 import lombok.Data;
@@ -13,7 +11,6 @@ public class GptSession {
     ChatLanguageModel chatModel;
     ImageModel imageModel;
     String tips;
-    ChatMemory chatMemory;
 
     public GptSession(String userName, Boolean login, ChatLanguageModel chatModel, ImageModel imageModel, String tips) {
         this.userName = userName;
@@ -21,17 +18,11 @@ public class GptSession {
         this.chatModel = chatModel;
         this.imageModel = imageModel;
         this.tips = tips;
-        this.chatMemory = MessageWindowChatMemory.withMaxMessages(100);
-    }
-
-    public void clear() {
-        this.chatMemory.clear();
     }
 
     public void reset() {
         this.setChatModel(null);
         this.setImageModel(null);
-        this.chatMemory.clear();
         this.setLogin(false);
         this.setTips("bye");
     }

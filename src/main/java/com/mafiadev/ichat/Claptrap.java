@@ -1,7 +1,7 @@
 package com.mafiadev.ichat;
 
 import com.mafiadev.ichat.constant.Constant;
-import com.mafiadev.ichat.gpt.GptListener;
+import com.mafiadev.ichat.llm.GptListener;
 import com.mafiadev.ichat.util.FileUtil;
 import com.meteor.wechatbc.impl.plugin.BasePlugin;
 

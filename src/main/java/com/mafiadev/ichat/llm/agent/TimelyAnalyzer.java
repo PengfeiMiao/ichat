@@ -1,4 +1,4 @@
-package com.mafiadev.ichat.gpt.agent;
+package com.mafiadev.ichat.llm.agent;
 
 import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.UserName;

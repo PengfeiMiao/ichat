@@ -1,4 +1,4 @@
-package com.mafiadev.ichat.gpt;
+package com.mafiadev.ichat.llm;
 
 import com.mafiadev.ichat.Claptrap;
 import com.meteor.wechatbc.entitiy.message.Message;
