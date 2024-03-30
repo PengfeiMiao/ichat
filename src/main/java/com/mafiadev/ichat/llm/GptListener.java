@@ -53,9 +53,9 @@ public class GptListener implements Listener {
 
     public Request getRequest(GptSession session, String msg) {
         if (session.strict) {
-            String ownerPrefix = "@" + ownerName + " ";
-            if (!msg.startsWith(ownerPrefix) && !msg.startsWith("\\gpt ")) return null;
-            else msg = msg.replaceFirst(ownerPrefix, "");
+            String ownerLoc = "@" + ownerName;
+            if (!msg.contains(ownerLoc) && !msg.startsWith("\\gpt ")) return null;
+            else msg = msg.replaceFirst(ownerLoc, "");
         }
         if (msg.startsWith("#image") || CommonUtil.isSimilar(msg, "画个", 0.5)) {
             return new Request(AnswerType.IMAGE, msg.replaceFirst("#image", "").trim());
@@ -93,7 +93,6 @@ public class GptListener implements Listener {
                     message.getFromUserName() : message.getSenderUserName();
             sessionId = Base64.getEncoder().encodeToString(
                     (message.getFromUserName() + "&" + message.getSenderUserName()).getBytes(StandardCharsets.UTF_8));
-            System.out.println("SESSIONID: " + sessionId);
         } catch (Exception e) {
             return;
         }
