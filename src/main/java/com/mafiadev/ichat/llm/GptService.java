@@ -54,7 +54,8 @@ public class GptService {
         if (msg.startsWith("\\gpt")) {
             msg = msg.replace("\\gpt", "").trim();
             if (msg.startsWith("start")) {
-                session = login(userName);
+                boolean strict = msg.startsWith("start -s");
+                session = login(userName, strict);
             }
             if (msg.startsWith("clear")) {
                 chatMemoryStore.deleteMessages(userName);
@@ -131,7 +132,7 @@ public class GptService {
         return drawer.route(session.userName, userMsg);
     }
 
-    private GptSession login(String userName) {
+    private GptSession login(String userName, boolean strict) {
         ChatLanguageModel chatModel = OpenAiChatModel.builder()
                 .baseUrl(BASE_URL)
                 .apiKey(KEY)
@@ -145,7 +146,7 @@ public class GptService {
                 .withPersisting()
                 .persistTo(FILE_PATH)
                 .build();
-        GptSession session = new GptSession(userName, true, chatModel, imageModel, null);
+        GptSession session = new GptSession(userName, true, chatModel, imageModel, null, strict);
         sessionHashMap.put(userName, session);
         return session;
     }
@@ -158,7 +159,7 @@ public class GptService {
     public static void main(String[] args) {
 //        String question = "今日白羊星座分析";
         GptService gptService = new GptService();
-        GptSession gptSession = gptService.login("test");
+        GptSession gptSession = gptService.login("test", false);
         Scanner scanner = new Scanner(System.in);
         while (scanner.hasNext()) {
             String question = scanner.nextLine();

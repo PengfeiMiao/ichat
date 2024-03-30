@@ -6,6 +6,6 @@ import dev.langchain4j.service.V;
 
 public interface Drawer {
 
-    @UserMessage("Whether question `{{message}}` is requested to draw somthing")
+    @UserMessage("Whether `{{message}}` 与 `绘画` 或 `生成图片` 强相关")
     boolean route(@UserName String userName, @UserMessage @V("message") String message);
 }

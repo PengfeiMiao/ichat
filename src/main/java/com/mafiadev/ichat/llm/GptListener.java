@@ -21,14 +21,15 @@ import java.util.Optional;
 public class GptListener implements Listener {
 
     private final Claptrap plugin;
-
     private final HttpAPI sender;
+    private final String ownerName;
 
     private static final int MAX_LENGTH = 600;
 
     public GptListener(Claptrap plugin) {
         this.plugin = plugin;
         this.sender = plugin.getWeChatClient().getWeChatCore().getHttpAPI();
+        this.ownerName = plugin.getWeChatClient().getWeChatCore().getSession().getWxInitInfo().getUser().getNickName();
     }
 
     /**
@@ -51,9 +52,12 @@ public class GptListener implements Listener {
     }
 
     public Request getRequest(GptSession session, String msg) {
-        if (msg.startsWith("#image")
-                || CommonUtil.isSimilar(msg, "画个...", 0.5)
-                || GptService.INSTANCE.imageRouter(session, msg)) {
+        if (session.strict) {
+            String ownerPrefix = "@" + ownerName + " ";
+            if (!msg.startsWith(ownerPrefix) && !msg.startsWith("\\gpt ")) return null;
+            else msg = msg.replaceFirst(ownerPrefix, "");
+        }
+        if (msg.startsWith("#image") || CommonUtil.isSimilar(msg, "画个", 0.5)) {
             return new Request(AnswerType.IMAGE, msg.replaceFirst("#image", "").trim());
         }
         return new Request(AnswerType.TEXT, msg);

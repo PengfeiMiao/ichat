@@ -16,7 +16,7 @@ public interface Assistant {
                     "AND/OR/NOT 用于表示与/或/非的逻辑判断",
             "IF USER INPUT `如何使用机器人` OR `如何使用AI Bot`等相关问题 ELSE YOU OUTPUT 如下帮助文档:\n" +
                     "```\n" +
-                    "1) \\gpt start: 开始会话\n" +
+                    "1) \\gpt start [-s]: 开始会话, 可选选项 -s 用于启用严格模式(@机器人 触发)\n" +
                     "2) \\gpt end: 结束会话\n" +
                     "3) \\gpt clear: 清空会话记录\n" +
                     "4) #image + 文本: 图片生成请求，需要在会话中执行才可生效\n" +
