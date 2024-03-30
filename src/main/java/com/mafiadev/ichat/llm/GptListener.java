@@ -1,6 +1,7 @@
 package com.mafiadev.ichat.llm;
 
 import com.mafiadev.ichat.Claptrap;
+import com.mafiadev.ichat.util.CommonUtil;
 import com.meteor.wechatbc.entitiy.message.Message;
 import com.meteor.wechatbc.event.EventHandler;
 import com.meteor.wechatbc.impl.HttpAPI;
@@ -11,7 +12,9 @@ import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,8 +50,10 @@ public class GptListener implements Listener {
         private String prompt;
     }
 
-    public Request getRequest(String msg) {
-        if (msg.startsWith("#image")) {
+    public Request getRequest(GptSession session, String msg) {
+        if (msg.startsWith("#image")
+                || CommonUtil.isSimilar(msg, "画个...", 0.5)
+                || GptService.INSTANCE.imageRouter(session, msg)) {
             return new Request(AnswerType.IMAGE, msg.replaceFirst("#image", "").trim());
         }
         return new Request(AnswerType.TEXT, msg);
@@ -78,14 +83,17 @@ public class GptListener implements Listener {
         String content = receiveMessageEvent.getContent();
 
         String senderUserName;
+        String sessionId;
         try {
-            senderUserName = message.getSenderUserName() == null ?
-                    message.getSenderUserName() : message.getFromUserName();
+            senderUserName = message.getFromUserName() != null ?
+                    message.getFromUserName() : message.getSenderUserName();
+            sessionId = Base64.getEncoder().encodeToString(
+                    (message.getFromUserName() + "&" + message.getSenderUserName()).getBytes(StandardCharsets.UTF_8));
+            System.out.println("SESSIONID: " + sessionId);
         } catch (Exception e) {
             return;
         }
-
-        GptSession gptSession = GptService.INSTANCE.initSession(senderUserName, content);
+        GptSession gptSession = GptService.INSTANCE.initSession(sessionId, content);
 
         if (senderUserName == null || gptSession == null) {
             return;
@@ -97,7 +105,7 @@ public class GptListener implements Listener {
             return;
         }
 
-        Optional<Request> optionalRequest = Optional.ofNullable(getRequest(content));
+        Optional<Request> optionalRequest = Optional.ofNullable(getRequest(gptSession, content));
         optionalRequest.ifPresent(request -> {
             String prompt = request.getPrompt();
             if (request.getAnswerType() == AnswerType.TEXT) {

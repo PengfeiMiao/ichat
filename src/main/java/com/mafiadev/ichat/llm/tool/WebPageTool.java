@@ -13,7 +13,7 @@ import java.time.format.DateTimeFormatter;
 public class WebPageTool {
     public static final String[] weekDays = new String[] {"", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
 
-    @Tool("IF USER INPUT `热搜、头条、新闻` 等话题 ELSE YOU OUTPUT `序号) 热搜标题` CONDITION 每条热搜需要换行")
+    @Tool("IF USER INPUT `热搜、头条` 等新闻话题 ELSE YOU OUTPUT `序号) 热搜标题` CONDITION 每条热搜需要换行")
     public String getNews(@ToolMemoryId String userName,
                              @P("关键字：关于什么的微博热搜") String keyword) {
         return WeiBoCrawler.crawlWeiboTops();
@@ -32,6 +32,6 @@ public class WebPageTool {
         LocalDateTime now = LocalDateTime.now();
         DayOfWeek dayOfWeek = now.getDayOfWeek();
         int dayOfWeekValue = dayOfWeek.getValue();
-        return "当前时间:" + now.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + ", " + weekDays[dayOfWeekValue];
+        return "当前时间: " + now.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + ", " + weekDays[dayOfWeekValue];
     }
 }

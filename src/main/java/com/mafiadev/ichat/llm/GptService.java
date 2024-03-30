@@ -3,6 +3,7 @@ package com.mafiadev.ichat.llm;
 import com.mafiadev.ichat.Claptrap;
 import com.mafiadev.ichat.constant.GlobalThreadPool;
 import com.mafiadev.ichat.llm.agent.Assistant;
+import com.mafiadev.ichat.llm.agent.Drawer;
 import com.mafiadev.ichat.llm.tool.WebPageTool;
 import com.mafiadev.ichat.util.CommonUtil;
 import com.mafiadev.ichat.util.FileUtil;
@@ -122,6 +123,12 @@ public class GptService {
         ImageModel client = session.getImageModel();
         URI response = client.generate(userMsg).content().url();
         return FileUtil.pngConverter(response);
+    }
+
+    public boolean imageRouter(GptSession session, String userMsg) {
+        ChatLanguageModel chatModel = session.getChatModel();
+        Drawer drawer = AiServices.builder(Drawer.class).chatLanguageModel(chatModel).build();
+        return drawer.route(session.userName, userMsg);
     }
 
     private GptSession login(String userName) {
