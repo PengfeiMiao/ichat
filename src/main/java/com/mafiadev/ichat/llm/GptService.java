@@ -23,11 +23,15 @@ import dev.langchain4j.store.memory.chat.InMemoryChatMemoryStore;
 import java.io.File;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static com.mafiadev.ichat.constant.Constant.FILE_PATH;
 
@@ -73,6 +77,7 @@ public class GptService {
     }
 
     public String textDialog(GptSession session, String userMsg) {
+        String result = "";
         ChatLanguageModel chatModel = session.getChatModel();
         String userName = session.userName;
         Assistant assistant = AiServices.builder(Assistant.class)
@@ -85,37 +90,48 @@ public class GptService {
                         .build())
                 .build();
         List<String> failureWords = Arrays.asList("抱歉，", "由于网络问题", "请稍后再尝试");
-        filterNoise(session, failureWords);
 //        System.out.println("++++++++++");
 //        chatMemoryStore.getMessages(session.userName).forEach(item ->
 //                System.out.println(item.toString().replace("\n", "\\n")));
 //        System.out.println("----------");
         try {
-            return assistant.chat(userName, userMsg);
+            result = assistant.chat(userName, userMsg);
         } catch (Exception e) {
-            String result = chatModel.generate(
+            result = chatModel.generate(
                     SystemMessage.from(
                             "IF USER INPUT `请求最新信息` OR INPUT `请求使用搜索引擎` AND CONDITION TOOL `查询失败`\n" +
                                     "ELSE YOU OUTPUT `" + String.join("`, `", failureWords) + "` AROUND YOUR ANSWER"),
                     UserMessage.from(userMsg)).content().text();
-            chatMemoryStore.getMessages(session.userName).add(AiMessage.from(
-                    CommonUtil.isSimilar(result, "抱歉，", 0.5) ? "" : result));
-            return result;
+            chatMemoryStore.getMessages(session.userName).add(AiMessage.from(result));
         }
+        filterNoise(session, failureWords);
+        return result;
     }
 
     private static void filterNoise(GptSession session, List<String> keywords) {
         GlobalThreadPool.SCHEDULED_EXECUTOR.schedule(() -> {
             List<ChatMessage> chatMessages = chatMemoryStore.getMessages(session.userName);
+            List<Integer> intervals = IntStream.range(0, chatMessages.size())
+                    .filter(i -> chatMessages.get(i) instanceof UserMessage)
+                    .boxed().collect(Collectors.toList());
+            Set<ChatMessage> toDeletedMessages = new HashSet<>();
             for (int i = 0; i < chatMessages.size(); i++) {
                 ChatMessage it = chatMessages.get(i);
                 if (it instanceof AiMessage &&
                         ((AiMessage) it).text() != null &&
                         keywords.stream().anyMatch(
                                 word -> CommonUtil.isSimilar(((AiMessage) it).text(), word, 0.5))) {
-                    chatMessages.set(i, AiMessage.from(""));
+                    for (int j = 0; j < intervals.size() - 1; j++) {
+                        Integer start = intervals.get(j);
+                        Integer end = intervals.get(j + 1);
+                        if (i > start && i < end) {
+                            toDeletedMessages.addAll(chatMessages.subList(start, end));
+                            break;
+                        }
+                    }
                 }
             }
+            chatMessages.removeAll(toDeletedMessages);
         }, 3, TimeUnit.SECONDS);
     }
 
@@ -157,7 +173,6 @@ public class GptService {
     }
 
     public static void main(String[] args) {
-//        String question = "今日白羊星座分析";
         GptService gptService = new GptService();
         GptSession gptSession = gptService.login("test", false);
         Scanner scanner = new Scanner(System.in);

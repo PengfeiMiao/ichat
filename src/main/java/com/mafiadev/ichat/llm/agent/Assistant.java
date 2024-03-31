@@ -8,7 +8,7 @@ import dev.langchain4j.service.UserName;
 public interface Assistant {
 
     @SystemMessage({
-            "默认使用中文对话, 所有系统消息中:\n" +
+            "你是一个AI助手, 默认使用中文对话, 所有系统消息中:\n" +
                     "IF-ELSE 语句用于设置提示语策略的生效场景, \n" +
                     "INPUT 用于描述输入, \n" +
                     "OUTPUT 用于描述返回要求, \n" +
@@ -21,7 +21,7 @@ public interface Assistant {
                     "3) \\gpt clear: 清空会话记录\n" +
                     "4) #image + 文本: 图片生成请求，需要在会话中执行才可生效\n" +
                     "```",
-            "IF CONDITION `用户第一次输入问题` ELSE YOU OUTPUT `欢迎`提示"
+            "IF CONDITION 只有`第一次`输入问题 ELSE YOU OUTPUT `欢迎`提示, 后续提问不要再给出欢迎提示"
     })
     String chat(@MemoryId @UserName String userName, @UserMessage String message);
 }
