@@ -9,6 +9,7 @@ import com.meteor.wechatbc.impl.event.Listener;
 import com.meteor.wechatbc.impl.event.sub.ReceiveMessageEvent;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.apache.commons.text.similarity.JaroWinklerDistance;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -57,7 +58,7 @@ public class GptListener implements Listener {
             if (!msg.contains(ownerLoc) && !msg.startsWith("\\gpt ")) return null;
             else msg = msg.replaceFirst(ownerLoc, "");
         }
-        if (msg.startsWith("#image") || CommonUtil.isSimilar(msg, "画个", 0.5)) {
+        if (msg.startsWith("#image") || CommonUtil.isSimilar(msg, "画个", 0.33)) {
             return new Request(AnswerType.IMAGE, msg.replaceFirst("#image", "").trim());
         }
         return new Request(AnswerType.TEXT, msg);
