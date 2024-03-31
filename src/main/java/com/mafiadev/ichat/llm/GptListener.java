@@ -70,15 +70,22 @@ public class GptListener implements Listener {
         StringBuilder sb = new StringBuilder();
         for (String it : texts) {
             if (sb.length() + it.length() >= MAX_LENGTH) {
-                textArr.add(sb.toString());
+                textArr.add(removeLast(sb));
                 sb.setLength(0);
             }
-            sb.append(it);
+            sb.append(it).append("\n");
         }
         if (sb.length() > 0) {
-            textArr.add(sb.toString());
+            textArr.add(removeLast(sb));
         }
         return textArr;
+    }
+
+    private String removeLast(StringBuilder sb) {
+        if(sb.length() > 0) {
+            sb.setLength(sb.length() - 1);
+        }
+        return sb.toString();
     }
 
     @EventHandler
