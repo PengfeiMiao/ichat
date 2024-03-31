@@ -65,7 +65,7 @@ public class GptService {
                 chatMemoryStore.deleteMessages(userName);
             }
             if (msg.startsWith("end")) {
-                chatMemoryStore.deleteMessages(userName);
+//                chatMemoryStore.deleteMessages(userName);
                 session.reset();
             }
             return session;
@@ -146,6 +146,10 @@ public class GptService {
         ChatLanguageModel chatModel = session.getChatModel();
         Drawer drawer = AiServices.builder(Drawer.class).chatLanguageModel(chatModel).build();
         return drawer.route(session.userName, userMsg);
+    }
+
+    public ChatMemoryStore getChatMemoryStore() {
+        return chatMemoryStore;
     }
 
     private GptSession login(String userName, boolean strict) {

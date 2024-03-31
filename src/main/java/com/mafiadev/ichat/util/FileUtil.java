@@ -1,10 +1,12 @@
 package com.mafiadev.ichat.util;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -49,6 +51,34 @@ public class FileUtil {
     public static void mkDir(Path path) {
         try {
             Files.createDirectories(path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void mkFile(Path path) {
+        try {
+            if (Files.exists(path)) {
+                return;
+            }
+            Files.createFile(path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String readJson(Path path) {
+        try {
+            return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static void writeJson(Path path, String json) {
+        try (FileWriter fileWriter = new FileWriter(path.toString())) {
+            fileWriter.write(json);
         } catch (IOException e) {
             e.printStackTrace();
         }

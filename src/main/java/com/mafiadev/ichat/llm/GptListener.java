@@ -1,6 +1,7 @@
 package com.mafiadev.ichat.llm;
 
 import com.mafiadev.ichat.Claptrap;
+import com.mafiadev.ichat.admin.AdminService;
 import com.mafiadev.ichat.util.CommonUtil;
 import com.meteor.wechatbc.entitiy.message.Message;
 import com.meteor.wechatbc.event.EventHandler;
@@ -9,7 +10,6 @@ import com.meteor.wechatbc.impl.event.Listener;
 import com.meteor.wechatbc.impl.event.sub.ReceiveMessageEvent;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.apache.commons.text.similarity.JaroWinklerDistance;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -37,6 +37,7 @@ public class GptListener implements Listener {
      * 注册监听器
      */
     public void register() {
+        AdminService.init(plugin);
         GptService.init(plugin);
         plugin.getWeChatClient().getEventManager().registerPluginListener(plugin, this);
     }
@@ -55,8 +56,11 @@ public class GptListener implements Listener {
     public Request getRequest(GptSession session, String msg) {
         if (session.strict) {
             String ownerLoc = "@" + ownerName;
-            if (!msg.contains(ownerLoc) && !msg.startsWith("\\gpt ")) return null;
-            else msg = msg.replaceFirst(ownerLoc, "");
+            if (!msg.contains(ownerLoc) && !msg.startsWith("\\gpt ")) {
+                return null;
+            } else {
+                msg = msg.replaceFirst(ownerLoc, "");
+            }
         }
         if (msg.startsWith("#image") || CommonUtil.isSimilar(msg, "画个", 0.33)) {
             return new Request(AnswerType.IMAGE, msg.replaceFirst("#image", "").trim());
@@ -83,7 +87,7 @@ public class GptListener implements Listener {
     }
 
     private String removeLast(StringBuilder sb) {
-        if(sb.length() > 0) {
+        if (sb.length() > 0) {
             sb.setLength(sb.length() - 1);
         }
         return sb.toString();
@@ -104,6 +108,13 @@ public class GptListener implements Listener {
         } catch (Exception e) {
             return;
         }
+
+        String adminMsg = AdminService.INSTANCE.handler(sessionId, content);
+        if (adminMsg != null) {
+            sender.sendMessage(senderUserName, adminMsg);
+            return;
+        }
+
         GptSession gptSession = GptService.INSTANCE.initSession(sessionId, content);
 
         if (senderUserName == null || gptSession == null) {
