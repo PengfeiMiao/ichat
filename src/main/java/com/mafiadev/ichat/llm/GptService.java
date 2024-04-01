@@ -42,8 +42,8 @@ public class GptService {
         INSTANCE = new GptService(plugin);
     }
 
-    private static final Map<String, GptSession> sessionHashMap = new ConcurrentHashMap<>();
-    private static final ChatMemoryStore chatMemoryStore = new InMemoryChatMemoryStore();
+    public static final Map<String, GptSession> sessionHashMap = new ConcurrentHashMap<>();
+    public static final ChatMemoryStore chatMemoryStore = new InMemoryChatMemoryStore();
 
     private final String BASE_URL;
     private final String KEY;
@@ -148,11 +148,7 @@ public class GptService {
         return drawer.route(session.userName, userMsg);
     }
 
-    public ChatMemoryStore getChatMemoryStore() {
-        return chatMemoryStore;
-    }
-
-    private GptSession login(String userName, boolean strict) {
+    public GptSession login(String userName, boolean strict) {
         ChatLanguageModel chatModel = OpenAiChatModel.builder()
                 .baseUrl(BASE_URL)
                 .apiKey(KEY)

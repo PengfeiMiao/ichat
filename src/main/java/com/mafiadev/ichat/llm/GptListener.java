@@ -6,6 +6,7 @@ import com.mafiadev.ichat.util.CommonUtil;
 import com.meteor.wechatbc.entitiy.message.Message;
 import com.meteor.wechatbc.event.EventHandler;
 import com.meteor.wechatbc.impl.HttpAPI;
+import com.meteor.wechatbc.impl.contact.ContactManager;
 import com.meteor.wechatbc.impl.event.Listener;
 import com.meteor.wechatbc.impl.event.sub.ReceiveMessageEvent;
 import lombok.AllArgsConstructor;
@@ -16,6 +17,7 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,6 +26,7 @@ public class GptListener implements Listener {
     private final Claptrap plugin;
     private final HttpAPI sender;
     private final String ownerName;
+    private final ContactManager contactManager;
 
     private static final int MAX_LENGTH = 600;
 
@@ -31,14 +34,15 @@ public class GptListener implements Listener {
         this.plugin = plugin;
         this.sender = plugin.getWeChatClient().getWeChatCore().getHttpAPI();
         this.ownerName = plugin.getWeChatClient().getWeChatCore().getSession().getWxInitInfo().getUser().getNickName();
+        this.contactManager = plugin.getWeChatClient().getContactManager();
     }
 
     /**
      * 注册监听器
      */
     public void register() {
-        AdminService.init(plugin);
         GptService.init(plugin);
+        AdminService.init(plugin);
         plugin.getWeChatClient().getEventManager().registerPluginListener(plugin, this);
     }
 
@@ -70,6 +74,9 @@ public class GptListener implements Listener {
 
     @NotNull
     public List<String> handleLongMessage(String text) {
+        if (text.length() < MAX_LENGTH) {
+            return Collections.singletonList(text);
+        }
         String[] texts = text.split("\n");
         List<String> textArr = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
@@ -104,14 +111,14 @@ public class GptListener implements Listener {
             senderUserName = message.getFromUserName() != null ?
                     message.getFromUserName() : message.getSenderUserName();
             sessionId = Base64.getEncoder().encodeToString(
-                    (message.getFromUserName() + "&" + message.getSenderUserName()).getBytes(StandardCharsets.UTF_8));
+                    (senderUserName + "&" + contactManager.getContact(senderUserName).getNickName()).getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             return;
         }
 
         String adminMsg = AdminService.INSTANCE.handler(sessionId, content);
         if (adminMsg != null) {
-            sender.sendMessage(senderUserName, adminMsg);
+            handleLongMessage(adminMsg).forEach(it -> sender.sendMessage(senderUserName, it));
             return;
         }
 
@@ -132,12 +139,7 @@ public class GptListener implements Listener {
             String prompt = request.getPrompt();
             if (request.getAnswerType() == AnswerType.TEXT) {
                 String text = GptService.INSTANCE.textDialog(gptSession, prompt);
-                if (text.length() < MAX_LENGTH) {
-                    sender.sendMessage(senderUserName, text);
-                } else {
-                    List<String> textArr = handleLongMessage(text);
-                    textArr.forEach(it -> sender.sendMessage(senderUserName, it));
-                }
+                handleLongMessage(text).forEach(it -> sender.sendMessage(senderUserName, it));
             } else {
                 File image = GptService.INSTANCE.imageDialog(gptSession, prompt);
                 sender.sendImage(senderUserName, image);

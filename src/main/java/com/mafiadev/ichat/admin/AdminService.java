@@ -1,10 +1,14 @@
 package com.mafiadev.ichat.admin;
 
+import cn.hutool.core.collection.ConcurrentHashSet;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.mafiadev.ichat.Claptrap;
 import com.mafiadev.ichat.llm.GptService;
+import com.mafiadev.ichat.llm.GptSession;
 import com.mafiadev.ichat.util.FileUtil;
+import com.meteor.wechatbc.entitiy.contact.Contact;
+import com.meteor.wechatbc.impl.contact.ContactManager;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
@@ -12,13 +16,15 @@ import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.store.memory.chat.ChatMemoryStore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,15 +41,18 @@ public class AdminService {
     }
 
     private static final List<String> admins = new ArrayList<>();
-    private static Set<String> users = new HashSet<>();
+    private static final Set<String> sessionIds = new ConcurrentHashSet<>();
     private final String password;
+    private final ContactManager contactManager;
 
     private AdminService(Claptrap plugin) {
         this.password = plugin.getConfig().getString("adminPwd");
+        this.contactManager = plugin.getWeChatClient().getContactManager();
+        load(this.contactManager, GptService.sessionHashMap, GptService.chatMemoryStore);
     }
 
     public String handler(String sessionId, String msg) {
-        users.add(sessionId);
+        sessionIds.add(sessionId);
         if (msg.startsWith("\\admin")) {
             msg = msg.replace("\\admin", "").trim();
             if (msg.startsWith("login " + password)) {
@@ -52,37 +61,69 @@ public class AdminService {
                 return "login success";
             }
             if (admins.contains(sessionId)) {
-                ChatMemoryStore chatMemoryStore = GptService.INSTANCE.getChatMemoryStore();
+                Map<String, GptSession> sessionHashMap = GptService.sessionHashMap;
+                ChatMemoryStore chatMemoryStore = GptService.chatMemoryStore;
                 if (msg.startsWith("load")) {
-                    String json = FileUtil.readJson(JSON_PATH);
-                    History history = JSONObject.parseObject(json, History.class);
-                    if (history != null) {
-                        users = history.getHistories().keySet();
-                        users.forEach(user -> chatMemoryStore.updateMessages(user, history.getMessages(user)));
-                    }
+                    load(this.contactManager, sessionHashMap, chatMemoryStore);
                     return "load success";
                 }
                 if (msg.startsWith("store")) {
-                    History history = new History();
-                    users.forEach(user -> history.setMessages(user, chatMemoryStore.getMessages(user)));
-                    FileUtil.writeJson(JSON_PATH, JSON.toJSONString(history));
+                    store(sessionHashMap, chatMemoryStore);
                     return "store success";
                 }
                 if (msg.startsWith("output")) {
-                    StringBuilder sb = new StringBuilder();
-                    for (String user : users) {
-                        if (chatMemoryStore.getMessages(user) == null) {
-                            continue;
-                        }
-                        List<String> lines = chatMemoryStore.getMessages(user).stream()
-                                .map(ChatMessage::toString).collect(Collectors.toList());
-                        sb.append(user, 0, 10).append(":\n").append(String.join("\n", lines));
-                    }
-                    return sb.toString();
+                    return output(chatMemoryStore);
                 }
             }
+            return "";
         }
         return null;
+    }
+
+    private static void load(ContactManager contactManager,
+                             Map<String, GptSession> sessionMap,
+                             ChatMemoryStore chatMemoryStore) {
+        String json = FileUtil.readJson(JSON_PATH);
+        History history = JSONObject.parseObject(json, History.class);
+        if (history != null) {
+            sessionIds.addAll(history.getHistories().keySet());
+            sessionIds.forEach(sessionId -> {
+                String[] sessionInfo = sessionId.split("&");
+                if (sessionInfo.length > 2) {
+                    Contact currentUser = contactManager.getContactByNickName(sessionInfo[1]);
+                    String newSessionId = Base64.getEncoder().encodeToString(
+                            (currentUser.getUserName() + "&" + currentUser.getNickName()).getBytes(
+                                    StandardCharsets.UTF_8));
+                    sessionMap.put(newSessionId,
+                            GptService.INSTANCE.login(newSessionId, "true".equals(sessionInfo[2])));
+                    chatMemoryStore.updateMessages(newSessionId, history.getMessages(sessionId));
+                }
+            });
+        }
+    }
+
+    private static void store(Map<String, GptSession> sessionMap,
+                              ChatMemoryStore chatMemoryStore) {
+        History history = new History();
+        sessionIds.stream().filter(sessionMap::containsKey).forEach(sessionId -> {
+            String key = new String(Base64.getDecoder().decode(sessionId)) + "&" + sessionMap.get(sessionId).getStrict();
+            history.setMessages(key, chatMemoryStore.getMessages(sessionId));
+        });
+        FileUtil.writeJson(JSON_PATH, JSON.toJSONString(history));
+    }
+
+    @NotNull
+    private static String output(ChatMemoryStore chatMemoryStore) {
+        StringBuilder sb = new StringBuilder();
+        for (String sessionId : sessionIds) {
+            if (chatMemoryStore.getMessages(sessionId) == null) {
+                continue;
+            }
+            List<String> lines = chatMemoryStore.getMessages(sessionId).stream()
+                    .map(ChatMessage::toString).collect(Collectors.toList());
+            sb.append(sessionId, 0, 10).append(":\n").append(String.join("\n", lines));
+        }
+        return sb.toString();
     }
 
     private static String getChatType(ChatMessage chatMessage) {
@@ -131,11 +172,11 @@ public class AdminService {
             this.histories = new HashMap<>();
         }
 
-        void setMessages(String name, List<ChatMessage> messages) {
+        void setMessages(String key, List<ChatMessage> messages) {
             List<CustomMessage> customMessages = messages.stream()
                     .filter(it -> getChatType(it) != null)
                     .map(CustomMessage::new).collect(Collectors.toList());
-            this.histories.put(name, customMessages);
+            this.histories.put(key, customMessages);
         }
 
         List<ChatMessage> getMessages(String name) {
