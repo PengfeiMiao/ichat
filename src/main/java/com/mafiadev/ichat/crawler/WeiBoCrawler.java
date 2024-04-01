@@ -44,6 +44,7 @@ public class WeiBoCrawler {
                                 .map(ele -> String.format("%s (https://s.weibo.com%s)", ele.text(),
                                         ele.select("a[href]").attr("href")))
                                 .filter(it -> !it.contains("javascript:void(0);"))
+                                .skip(1)
                                 .collect(Collectors.toList());
                         return String.join("\n", news);
                     }

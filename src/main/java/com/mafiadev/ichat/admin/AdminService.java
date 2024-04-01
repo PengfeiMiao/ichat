@@ -6,6 +6,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.mafiadev.ichat.Claptrap;
 import com.mafiadev.ichat.llm.GptService;
 import com.mafiadev.ichat.llm.GptSession;
+import com.mafiadev.ichat.util.CacheUtil;
 import com.mafiadev.ichat.util.FileUtil;
 import com.meteor.wechatbc.entitiy.contact.Contact;
 import com.meteor.wechatbc.impl.contact.ContactManager;
@@ -57,7 +58,6 @@ public class AdminService {
             msg = msg.replace("\\admin", "").trim();
             if (msg.startsWith("login " + password)) {
                 admins.add(sessionId);
-                FileUtil.mkFile(JSON_PATH);
                 return "login success";
             }
             if (admins.contains(sessionId)) {
@@ -70,6 +70,10 @@ public class AdminService {
                 if (msg.startsWith("store")) {
                     store(sessionHashMap, chatMemoryStore);
                     return "store success";
+                }
+                if (msg.startsWith("clear")) {
+                    clear(sessionHashMap, chatMemoryStore);
+                    return "clear success";
                 }
                 if (msg.startsWith("output")) {
                     return output(chatMemoryStore);
@@ -100,6 +104,17 @@ public class AdminService {
                 }
             });
         }
+    }
+
+    public static void clear(Map<String, GptSession> sessionMap, ChatMemoryStore chatMemoryStore) {
+        sessionMap.keySet().forEach(sessionId -> {
+            List<ChatMessage> messages = chatMemoryStore.getMessages(sessionId);
+            if (messages.size() > 3) {
+                messages.subList(3, messages.size()).clear();
+            }
+        });
+        CacheUtil.reset();
+        FileUtil.delete(JSON_PATH);
     }
 
     private static void store(Map<String, GptSession> sessionMap,

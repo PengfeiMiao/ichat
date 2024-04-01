@@ -67,7 +67,16 @@ public class FileUtil {
         }
     }
 
+    public static void delete(Path path) {
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static String readJson(Path path) {
+        FileUtil.mkFile(path);
         try {
             return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
         } catch (IOException e) {
@@ -77,6 +86,7 @@ public class FileUtil {
     }
 
     public static void writeJson(Path path, String json) {
+        FileUtil.mkFile(path);
         try (FileWriter fileWriter = new FileWriter(path.toString())) {
             fileWriter.write(json);
         } catch (IOException e) {

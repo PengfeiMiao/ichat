@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import static com.mafiadev.ichat.constant.Constant.SEARCH_FAILED;
+
 public class SearchCrawler {
 
     public static final Map<String, String> searchEngines = new HashMap<String, String>() {{
@@ -22,7 +24,9 @@ public class SearchCrawler {
 
     public static final List<String> failureMsg = Arrays.asList(
             "百度安全验证",
-            "验证"
+            "验证码",
+            "操作过于频繁",
+            "操作太频繁"
     );
 
     public static Map<String, Long> failureCache = new ConcurrentHashMap<>();
@@ -42,6 +46,7 @@ public class SearchCrawler {
         content = CommonCrawler.crawlContent(webUrl + keyword, false);
         if (failureMsg.stream().anyMatch(content::contains)) {
             failureCache.put(engine, System.currentTimeMillis());
+            content = SEARCH_FAILED;
         }
         return content;
     }

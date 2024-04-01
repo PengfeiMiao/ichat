@@ -1,6 +1,7 @@
 package com.mafiadev.ichat.llm;
 
 import com.mafiadev.ichat.Claptrap;
+import com.mafiadev.ichat.admin.AdminService;
 import com.mafiadev.ichat.constant.GlobalThreadPool;
 import com.mafiadev.ichat.llm.agent.Assistant;
 import com.mafiadev.ichat.llm.agent.Drawer;
@@ -97,12 +98,17 @@ public class GptService {
         try {
             result = assistant.chat(userName, userMsg);
         } catch (Exception e) {
-            result = chatModel.generate(
-                    SystemMessage.from(
-                            "IF USER INPUT `请求最新信息` OR INPUT `请求使用搜索引擎` AND CONDITION TOOL `查询失败`\n" +
-                                    "ELSE YOU OUTPUT `" + String.join("`, `", failureWords) + "` AROUND YOUR ANSWER"),
-                    UserMessage.from(userMsg)).content().text();
-            chatMemoryStore.getMessages(session.userName).add(AiMessage.from(result));
+            try {
+                result = chatModel.generate(
+                        SystemMessage.from(
+                                "IF USER INPUT `请求最新信息` OR INPUT `请求使用搜索引擎` AND CONDITION TOOL `查询失败`\n" +
+                                        "ELSE YOU OUTPUT `" + String.join("`, `", failureWords) +
+                                        "` AROUND YOUR ANSWER"),
+                        UserMessage.from(userMsg)).content().text();
+                chatMemoryStore.getMessages(session.userName).add(AiMessage.from(result));
+            } catch (Exception e1) {
+                return String.join(", ", failureWords);
+            }
         }
         filterNoise(session, failureWords);
         return result;
@@ -179,6 +185,10 @@ public class GptService {
         while (scanner.hasNext()) {
             String question = scanner.nextLine();
             if (question == null || question.isEmpty()) {
+                continue;
+            }
+            if (question.equals("admin clear")) {
+                AdminService.clear(sessionHashMap, chatMemoryStore);
                 continue;
             }
             System.out.println("AI Answer: " + gptService.textDialog(gptSession, question));

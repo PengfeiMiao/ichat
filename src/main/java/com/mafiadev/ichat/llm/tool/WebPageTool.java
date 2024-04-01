@@ -2,6 +2,7 @@ package com.mafiadev.ichat.llm.tool;
 
 import com.mafiadev.ichat.crawler.SearchCrawler;
 import com.mafiadev.ichat.crawler.WeiBoCrawler;
+import com.mafiadev.ichat.util.CacheUtil;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolMemoryId;
@@ -15,8 +16,8 @@ public class WebPageTool {
 
     @Tool("IF USER INPUT `热搜、头条` 等新闻话题 ELSE YOU OUTPUT `序号) 热搜标题` CONDITION 每条热搜需要换行")
     public String getNews(@ToolMemoryId String userName,
-                             @P("关键字：关于什么的微博热搜") String keyword) {
-        return WeiBoCrawler.crawlWeiboTops();
+                             @P("关键字：比如 微博热搜、今日头条、每日新闻") String keyword) {
+        return CacheUtil.cacheFunc(keyword, (ignored) -> WeiBoCrawler.crawlWeiboTops());
     }
 
     // google,
@@ -24,7 +25,7 @@ public class WebPageTool {
     public String getWebPage(@ToolMemoryId String userName,
                              @P("The origin query") String query,
                              @P("Name of the search engine: [baidu, bing, 360, sogou, quark]") String engine) {
-        return SearchCrawler.crawlFromEngine(engine, query);
+        return CacheUtil.cacheFunc(engine + "&" + query, (ignored) -> SearchCrawler.crawlFromEngine(engine, query));
     }
 
     @Tool("Get time-related information")
