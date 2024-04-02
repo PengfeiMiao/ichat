@@ -3,6 +3,7 @@ package com.mafiadev.ichat.llm;
 import com.mafiadev.ichat.Claptrap;
 import com.mafiadev.ichat.admin.AdminService;
 import com.mafiadev.ichat.util.CommonUtil;
+import com.meteor.wechatbc.entitiy.contact.Contact;
 import com.meteor.wechatbc.entitiy.message.Message;
 import com.meteor.wechatbc.event.EventHandler;
 import com.meteor.wechatbc.impl.HttpAPI;
@@ -110,9 +111,12 @@ public class GptListener implements Listener {
         try {
             senderUserName = message.getFromUserName() != null ?
                     message.getFromUserName() : message.getSenderUserName();
+            String nickName = Optional.ofNullable(contactManager.getContact(senderUserName))
+                    .map(Contact::getNickName).orElse("null");
             sessionId = Base64.getEncoder().encodeToString(
-                    (senderUserName + "&" + contactManager.getContact(senderUserName).getNickName()).getBytes(StandardCharsets.UTF_8));
+                    (senderUserName + "&" + nickName).getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
+            e.printStackTrace();
             return;
         }
 

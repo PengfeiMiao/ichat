@@ -23,7 +23,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -79,7 +78,7 @@ public class AdminService {
                     return output(chatMemoryStore);
                 }
             }
-            return "";
+            return "please login";
         }
         return null;
     }
@@ -121,8 +120,12 @@ public class AdminService {
                               ChatMemoryStore chatMemoryStore) {
         History history = new History();
         sessionIds.stream().filter(sessionMap::containsKey).forEach(sessionId -> {
-            String key = new String(Base64.getDecoder().decode(sessionId)) + "&" + sessionMap.get(sessionId).getStrict();
-            history.setMessages(key, chatMemoryStore.getMessages(sessionId));
+            String sessionInfo = new String(Base64.getDecoder().decode(sessionId));
+            String[] sessionFields = sessionInfo.split("&");
+            if (sessionFields.length > 1 && !"null".equals(sessionFields[1])) {
+                String key = sessionInfo + "&" + sessionMap.get(sessionId).getStrict();
+                history.setMessages(key, chatMemoryStore.getMessages(sessionId));
+            }
         });
         FileUtil.writeJson(JSON_PATH, JSON.toJSONString(history));
     }
@@ -136,7 +139,10 @@ public class AdminService {
             }
             List<String> lines = chatMemoryStore.getMessages(sessionId).stream()
                     .map(ChatMessage::toString).collect(Collectors.toList());
-            sb.append(sessionId, 0, 10).append(":\n").append(String.join("\n", lines));
+            String sessionInfo = new String(Base64.getDecoder().decode(sessionId));
+            int start = Math.max(sessionInfo.indexOf("&"), 0);
+            int end = Math.min(sessionInfo.length() - start, 10) + start;
+            sb.append(sessionInfo, start, end).append(":\n").append(String.join("\n", lines));
         }
         return sb.toString();
     }
@@ -197,18 +203,5 @@ public class AdminService {
         List<ChatMessage> getMessages(String name) {
             return this.histories.get(name).stream().map(CustomMessage::toChatMessage).collect(Collectors.toList());
         }
-    }
-
-    public static void main(String[] args) {
-        List<ChatMessage> messages = Arrays.asList(
-                UserMessage.from("start"),
-                AiMessage.from("hello")
-        );
-        History history = new History();
-        history.setMessages("test", messages);
-        String json = JSON.toJSONString(history);
-        System.out.println(json);
-        History history1 = JSONObject.parseObject(json, History.class);
-        System.out.println(history1);
     }
 }

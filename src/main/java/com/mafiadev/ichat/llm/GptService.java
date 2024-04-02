@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -115,7 +114,7 @@ public class GptService {
     }
 
     private static void filterNoise(GptSession session, List<String> keywords) {
-        GlobalThreadPool.SCHEDULED_EXECUTOR.schedule(() -> {
+        GlobalThreadPool.CACHED_EXECUTOR.submit(() -> {
             List<ChatMessage> chatMessages = chatMemoryStore.getMessages(session.userName);
             List<Integer> intervals = IntStream.range(0, chatMessages.size())
                     .filter(i -> chatMessages.get(i) instanceof UserMessage)
@@ -138,7 +137,7 @@ public class GptService {
                 }
             }
             chatMessages.removeAll(toDeletedMessages);
-        }, 3, TimeUnit.SECONDS);
+        });
     }
 
     public File imageDialog(GptSession session, String userMsg) {
