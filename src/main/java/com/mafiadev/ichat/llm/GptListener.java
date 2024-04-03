@@ -122,7 +122,7 @@ public class GptListener implements Listener {
 
         String adminMsg = AdminService.INSTANCE.handler(sessionId, content);
         if (adminMsg != null) {
-            handleLongMessage(adminMsg).forEach(it -> sender.sendMessage(senderUserName, it));
+            sendLongMessage(senderUserName, adminMsg);
             return;
         }
 
@@ -143,10 +143,21 @@ public class GptListener implements Listener {
             String prompt = request.getPrompt();
             if (request.getAnswerType() == AnswerType.TEXT) {
                 String text = GptService.INSTANCE.textDialog(gptSession, prompt);
-                handleLongMessage(text).forEach(it -> sender.sendMessage(senderUserName, it));
+                sendLongMessage(senderUserName, text);
             } else {
                 File image = GptService.INSTANCE.imageDialog(gptSession, prompt);
                 sender.sendImage(senderUserName, image);
+            }
+        });
+    }
+
+    private void sendLongMessage(String senderUserName, String text) {
+        handleLongMessage(text).forEach(it -> {
+            sender.sendMessage(senderUserName, it);
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         });
     }
