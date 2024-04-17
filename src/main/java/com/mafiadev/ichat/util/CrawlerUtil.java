@@ -1,5 +1,6 @@
 package com.mafiadev.ichat.util;
 
+import com.mafiadev.ichat.crawler.IpPort;
 import org.jetbrains.annotations.NotNull;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -115,16 +116,28 @@ public class CrawlerUtil {
             "microsoft.com"
     );
 
-    public static final int TIMEOUT = 3000;
+    public static final int TIMEOUT = 10000;
 
     public static final Safelist SAFELIST = Safelist.simpleText().addTags("p");
 
+    public static final ThreadLocal<List<IpPort>> IP_PORT_THREAD_LOCAL = new ThreadLocal<>();
+
     @NotNull
     public static Connection getConnection(String url) {
-        return Jsoup.connect(url).userAgent(getUserAgent()).timeout(TIMEOUT);
+        return Jsoup.connect(url).userAgent(getUserAgent())
+//                .proxy(Objects.requireNonNull(getIpPort()).toProxy())
+                .timeout(TIMEOUT);
     }
 
     public static String getUserAgent() {
         return USER_AGENTS.get(CommonUtil.randomIndex(USER_AGENTS.size()));
+    }
+
+    public static IpPort getIpPort() {
+        List<IpPort> ipPorts = IP_PORT_THREAD_LOCAL.get();
+        if (ipPorts != null) {
+            return ipPorts.get(CommonUtil.randomIndex(ipPorts.size()));
+        }
+        return null;
     }
 }

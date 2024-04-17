@@ -1,6 +1,7 @@
 package com.mafiadev.ichat.crawler;
 
 import com.mafiadev.ichat.util.CommonUtil;
+import com.mafiadev.ichat.util.CrawlerUtil;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -60,6 +61,13 @@ public class SearchCrawler {
     }
 
     public static void main(String[] args) {
-        System.out.println(crawlFromEngine("baidu", "今日双子座运势"));
+//        IpPoolCrawler ipPoolCrawler = new IpPoolCrawler();
+//        ipPoolCrawler.refresh();
+//        CrawlerUtil.IP_PORT_THREAD_LOCAL.set(ipPoolCrawler.load());
+        try {
+            System.out.println(crawlFromEngine("baidu", "今日双子座运势"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
