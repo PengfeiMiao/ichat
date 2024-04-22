@@ -1,11 +1,12 @@
 package com.mafiadev.ichat.util;
 
 import com.mafiadev.ichat.crawler.IpPort;
-import org.jetbrains.annotations.NotNull;
-import org.jsoup.Connection;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.safety.Safelist;
 
+import java.io.IOException;
+import java.net.Proxy;
 import java.util.Arrays;
 import java.util.List;
 
@@ -122,11 +123,16 @@ public class CrawlerUtil {
 
     public static final ThreadLocal<List<IpPort>> IP_PORT_THREAD_LOCAL = new ThreadLocal<>();
 
-    @NotNull
-    public static Connection getConnection(String url) {
-        return Jsoup.connect(url).userAgent(getUserAgent())
-//                .proxy(Objects.requireNonNull(getIpPort()).toProxy())
-                .timeout(TIMEOUT);
+    public static Document getDocument(String url) {
+        IpPort ipPort = getIpPort();
+        try {
+            return Jsoup.connect(url).userAgent(getUserAgent())
+                    .proxy(ipPort != null ? ipPort.toProxy() : Proxy.NO_PROXY)
+                    .timeout(TIMEOUT).get();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new Document("");
+        }
     }
 
     public static String getUserAgent() {
@@ -135,7 +141,7 @@ public class CrawlerUtil {
 
     public static IpPort getIpPort() {
         List<IpPort> ipPorts = IP_PORT_THREAD_LOCAL.get();
-        if (ipPorts != null) {
+        if (ipPorts != null && ipPorts.size() > 0) {
             return ipPorts.get(CommonUtil.randomIndex(ipPorts.size()));
         }
         return null;

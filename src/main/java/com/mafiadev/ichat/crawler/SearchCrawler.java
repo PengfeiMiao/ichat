@@ -1,7 +1,9 @@
 package com.mafiadev.ichat.crawler;
 
+import com.mafiadev.ichat.constant.Constant;
 import com.mafiadev.ichat.util.CommonUtil;
 import com.mafiadev.ichat.util.CrawlerUtil;
+import com.mafiadev.ichat.util.FileUtil;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -45,6 +47,7 @@ public class SearchCrawler {
             webUrl = engines.get(engine);
         }
         content = CommonCrawler.crawlContent(webUrl + keyword, false);
+//        System.out.println("crawlContent:\n" + content);
         if (failureMsg.stream().anyMatch(content::contains)) {
             failureCache.put(engine, System.currentTimeMillis());
             content = SEARCH_FAILED;
@@ -61,11 +64,12 @@ public class SearchCrawler {
     }
 
     public static void main(String[] args) {
-//        IpPoolCrawler ipPoolCrawler = new IpPoolCrawler();
-//        ipPoolCrawler.refresh();
-//        CrawlerUtil.IP_PORT_THREAD_LOCAL.set(ipPoolCrawler.load());
+        FileUtil.mkDir(Constant.FILE_PATH);
+        IpPoolCrawler ipPoolCrawler = new IpPoolCrawler();
+        ipPoolCrawler.refresh();
+        CrawlerUtil.IP_PORT_THREAD_LOCAL.set(ipPoolCrawler.load());
         try {
-            System.out.println(crawlFromEngine("baidu", "今日双子座运势"));
+            System.out.println(crawlFromEngine("sogou", "今日双子座运势"));
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -1,12 +1,12 @@
 baseUrl: "https://oneapi.xty.app/v1/"
 key: ""
 adminPwd: "123456"
+ipSwitch: false
 ipUrls:
   - https://www.proxy-list.download/api/v2/get?l=en&t=http
   - http://api.89ip.cn/tqdl.html?api=1&num=200&port=&address=&isp=
   - https://openproxy.space/list/http
   - http://www.ip3366.net/free/
-#  - http://www.kxdaili.com/dailiip.html
+#  - https://www.kuaidaili.com/free/
+#  - https://www.docip.net/free
 #  - https://www.zdaye.com/Free/
-#  - https://proxy.ip3366.net/free/
-#  - https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-1

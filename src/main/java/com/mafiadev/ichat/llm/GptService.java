@@ -7,6 +7,7 @@ import com.mafiadev.ichat.llm.agent.Assistant;
 import com.mafiadev.ichat.llm.agent.Drawer;
 import com.mafiadev.ichat.llm.tool.WebPageTool;
 import com.mafiadev.ichat.util.CommonUtil;
+import com.mafiadev.ichat.util.ConfigUtil;
 import com.mafiadev.ichat.util.FileUtil;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
@@ -89,7 +90,7 @@ public class GptService {
                         .id(userName)
                         .build())
                 .build();
-        List<String> failureWords = Arrays.asList("抱歉，", "由于网络问题", "请稍后再尝试");
+        List<String> failureWords = Arrays.asList("抱歉", "由于网络问题", "请稍后再尝试");
 //        System.out.println("++++++++++");
 //        chatMemoryStore.getMessages(session.userName).forEach(item ->
 //                System.out.println(item.toString().replace("\n", "\\n")));
@@ -173,8 +174,8 @@ public class GptService {
     }
 
     public GptService() {
-        this.BASE_URL = System.getenv("AI_URL");
-        this.KEY = System.getenv("AI_KEY");
+        this.BASE_URL = ConfigUtil.getConfig("baseUrl");
+        this.KEY = ConfigUtil.getConfig("key");
     }
 
     public static void main(String[] args) {
