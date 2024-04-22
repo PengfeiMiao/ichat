@@ -23,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -106,10 +107,19 @@ public class AdminService {
     }
 
     public static void clear(Map<String, GptSession> sessionMap, ChatMemoryStore chatMemoryStore) {
+        clear(sessionMap, chatMemoryStore, 1);
+    }
+
+    public static void clear(Map<String, GptSession> sessionMap, ChatMemoryStore chatMemoryStore, double rate) {
         sessionMap.keySet().forEach(sessionId -> {
             List<ChatMessage> messages = chatMemoryStore.getMessages(sessionId);
+            // 3 是初始化的3条系统消息
             if (messages.size() > 3) {
-                messages.subList(3, messages.size()).clear();
+                int toIndex = (int) ((messages.size() - 3) * rate + 3);
+                while(messages.size() > toIndex && !(messages.get(toIndex) instanceof UserMessage)) {
+                    toIndex++;
+                }
+                messages.subList(3, toIndex).clear();
             }
         });
         CacheUtil.reset();

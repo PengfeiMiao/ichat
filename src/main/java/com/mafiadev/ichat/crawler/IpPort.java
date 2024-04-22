@@ -14,6 +14,6 @@ public class IpPort {
     private Integer port;
 
     public Proxy toProxy() {
-        return new Proxy(Proxy.Type.HTTP, new InetSocketAddress(ip, port));
+        return new Proxy(Proxy.Type.HTTP, new InetSocketAddress(this.ip, this.port));
     }
 }

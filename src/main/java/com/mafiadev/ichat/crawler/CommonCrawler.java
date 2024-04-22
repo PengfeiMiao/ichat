@@ -21,7 +21,7 @@ public class CommonCrawler {
     public static String crawlContent(String url, boolean isPersist) {
         String rootHtml = "";
         try {
-            Document doc = CrawlerUtil.getConnection(url).get();
+            Document doc = CrawlerUtil.getDocument(url);
             rootHtml = Jsoup.clean(doc.html(), CrawlerUtil.SAFELIST);
 
             if (isPersist) {
@@ -41,7 +41,7 @@ public class CommonCrawler {
         List<String> htmls = new ArrayList<>();
         if (!url.startsWith("https://")) return htmls;
         try {
-            Document doc = CrawlerUtil.getConnection(url).get();
+            Document doc = CrawlerUtil.getDocument(url);
             String rootHtml = doc.html();
             htmls.add(Jsoup.clean(rootHtml, CrawlerUtil.SAFELIST));
             if (isPersist) {
@@ -66,10 +66,10 @@ public class CommonCrawler {
         List<String> list = new ArrayList<>();
         if (!url.startsWith("https://")) return list;
         try {
-            Document doc = CrawlerUtil.getConnection(url).get();
+            Document doc = CrawlerUtil.getDocument(url);
             list.add(url);
             list = crawlTreeUrls(doc, limit).collect(Collectors.toList());
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         return list;
