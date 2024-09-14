@@ -4,7 +4,7 @@ import com.mafiadev.ichat.Claptrap;
 import com.mafiadev.ichat.admin.AdminService;
 import com.mafiadev.ichat.constant.GlobalThreadPool;
 import com.mafiadev.ichat.llm.agent.Assistant;
-import com.mafiadev.ichat.llm.agent.Drawer;
+import com.mafiadev.ichat.llm.agent.Router;
 import com.mafiadev.ichat.llm.tool.WebPageTool;
 import com.mafiadev.ichat.util.CommonUtil;
 import com.mafiadev.ichat.util.ConfigUtil;
@@ -48,10 +48,12 @@ public class GptService {
 
     private final String BASE_URL;
     private final String KEY;
+    private final List<String> MODELS;
 
     private GptService(Claptrap plugin) {
         this.BASE_URL = plugin.getConfig().getString("baseUrl");
         this.KEY = plugin.getConfig().getString("key");
+        this.MODELS = ConfigUtil.getConfigArr("models");
     }
 
     public GptSession initSession(String userName, String msg) {
@@ -148,17 +150,23 @@ public class GptService {
         return FileUtil.pngConverter(response);
     }
 
+    public boolean toolRouter(GptSession session, String userMsg) {
+        ChatLanguageModel chatModel = session.getChatModel();
+        Router router = AiServices.builder(Router.class).chatLanguageModel(chatModel).build();
+        return router.routeTool(session.userName, userMsg);
+    }
+
     public boolean imageRouter(GptSession session, String userMsg) {
         ChatLanguageModel chatModel = session.getChatModel();
-        Drawer drawer = AiServices.builder(Drawer.class).chatLanguageModel(chatModel).build();
-        return drawer.route(session.userName, userMsg);
+        Router router = AiServices.builder(Router.class).chatLanguageModel(chatModel).build();
+        return router.routeDraw(session.userName, userMsg);
     }
 
     public GptSession login(String userName, boolean strict) {
         ChatLanguageModel chatModel = OpenAiChatModel.builder()
                 .baseUrl(BASE_URL)
                 .apiKey(KEY)
-                .modelName("gpt-3.5-turbo")
+                .modelName(MODELS.get(0))
                 .build();
         ImageModel imageModel = OpenAiImageModel.builder()
                 .baseUrl(BASE_URL)
@@ -176,6 +184,7 @@ public class GptService {
     public GptService() {
         this.BASE_URL = ConfigUtil.getConfig("baseUrl");
         this.KEY = ConfigUtil.getConfig("key");
+        this.MODELS = ConfigUtil.getConfigArr("models");
     }
 
     public static void main(String[] args) {

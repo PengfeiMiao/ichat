@@ -14,9 +14,9 @@ repositories {
 apply from: "${rootProject.projectDir}/gradle/git-hooks.gradle"
 
 dependencies {
-	implementation 'dev.langchain4j:langchain4j:0.29.0'
-	implementation 'dev.langchain4j:langchain4j-open-ai:0.29.0'
-//	implementation 'dev.langchain4j:langchain4j-easy-rag:0.29.0'
+	implementation 'dev.langchain4j:langchain4j-open-ai:0.34.0'
+	implementation 'dev.langchain4j:langchain4j:0.34.0'
+//	implementation 'dev.langchain4j:langchain4j-easy-rag'
 	implementation files('./libs/wechat-bc-1.1.9-SNAPSHOT.jar')
 
 	implementation 'org.slf4j:slf4j-api:2.0.12'
