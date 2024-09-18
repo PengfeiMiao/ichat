@@ -15,9 +15,7 @@ import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -113,8 +111,7 @@ public class GptListener implements Listener {
                     message.getFromUserName() : message.getSenderUserName();
             String nickName = Optional.ofNullable(contactManager.getContact(senderUserName))
                     .map(Contact::getNickName).orElse("null");
-            sessionId = Base64.getEncoder().encodeToString(
-                    (senderUserName + "&" + nickName).getBytes(StandardCharsets.UTF_8));
+            sessionId = CommonUtil.encode(senderUserName + "&" + nickName);
         } catch (Exception e) {
             e.printStackTrace();
             return;

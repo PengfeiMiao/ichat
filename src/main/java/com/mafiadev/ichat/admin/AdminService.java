@@ -7,6 +7,7 @@ import com.mafiadev.ichat.Claptrap;
 import com.mafiadev.ichat.llm.GptService;
 import com.mafiadev.ichat.llm.GptSession;
 import com.mafiadev.ichat.util.CacheUtil;
+import com.mafiadev.ichat.util.CommonUtil;
 import com.mafiadev.ichat.util.FileUtil;
 import com.meteor.wechatbc.entitiy.contact.Contact;
 import com.meteor.wechatbc.impl.contact.ContactManager;
@@ -19,12 +20,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -95,12 +93,11 @@ public class AdminService {
                 String[] sessionInfo = sessionId.split("&");
                 if (sessionInfo.length > 2) {
                     Contact currentUser = contactManager.getContactByNickName(sessionInfo[1]);
-                    String newSessionId = Base64.getEncoder().encodeToString(
-                            (currentUser.getUserName() + "&" + currentUser.getNickName()).getBytes(
-                                    StandardCharsets.UTF_8));
+                    String newSessionId = CommonUtil.encode(currentUser.getUserName() + "&" + currentUser.getNickName());
                     sessionMap.put(newSessionId,
                             GptService.INSTANCE.login(newSessionId, "true".equals(sessionInfo[2])));
-                    chatMemoryStore.updateMessages(newSessionId, history.getMessages(sessionId));
+                    chatMemoryStore.updateMessages(CommonUtil.tail(newSessionId, 64),
+                            history.getMessages(sessionId));
                 }
             });
         }
@@ -112,7 +109,7 @@ public class AdminService {
 
     public static void clear(Map<String, GptSession> sessionMap, ChatMemoryStore chatMemoryStore, double rate) {
         sessionMap.keySet().forEach(sessionId -> {
-            List<ChatMessage> messages = chatMemoryStore.getMessages(sessionId);
+            List<ChatMessage> messages = chatMemoryStore.getMessages(CommonUtil.tail(sessionId, 64));
             // 3 是初始化的3条系统消息
             if (messages.size() > 3) {
                 int toIndex = (int) ((messages.size() - 3) * rate + 3);
@@ -130,11 +127,12 @@ public class AdminService {
                               ChatMemoryStore chatMemoryStore) {
         History history = new History();
         sessionIds.stream().filter(sessionMap::containsKey).forEach(sessionId -> {
-            String sessionInfo = new String(Base64.getDecoder().decode(sessionId));
+            String sessionInfo = CommonUtil.decode(sessionId);
             String[] sessionFields = sessionInfo.split("&");
             if (sessionFields.length > 1 && !"null".equals(sessionFields[1])) {
-                String key = sessionInfo + "&" + sessionMap.get(sessionId).getStrict();
-                history.setMessages(key, chatMemoryStore.getMessages(sessionId));
+                GptSession gptSession = sessionMap.get(sessionId);
+                String key = sessionInfo + "&" + gptSession.getStrict();
+                history.setMessages(key, chatMemoryStore.getMessages(gptSession.getShortName()));
             }
         });
         FileUtil.writeJson(JSON_PATH, JSON.toJSONString(history));
@@ -144,12 +142,13 @@ public class AdminService {
     private static String output(ChatMemoryStore chatMemoryStore) {
         StringBuilder sb = new StringBuilder();
         for (String sessionId : sessionIds) {
-            if (chatMemoryStore.getMessages(sessionId) == null) {
+            String msgId = CommonUtil.tail(sessionId, 64);
+            if (chatMemoryStore.getMessages(msgId) == null) {
                 continue;
             }
-            List<String> lines = chatMemoryStore.getMessages(sessionId).stream()
+            List<String> lines = chatMemoryStore.getMessages(msgId).stream()
                     .map(ChatMessage::toString).collect(Collectors.toList());
-            String sessionInfo = new String(Base64.getDecoder().decode(sessionId));
+            String sessionInfo = CommonUtil.decode(sessionId);
             int start = Math.max(sessionInfo.indexOf("&"), 0);
             int end = Math.min(sessionInfo.length() - start, 10) + start;
             sb.append(sessionInfo, start, end).append(":\n").append(String.join("\n", lines));

@@ -25,6 +25,7 @@ import dev.langchain4j.store.memory.chat.InMemoryChatMemoryStore;
 import java.io.File;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +66,7 @@ public class GptService {
                 session = login(userName, strict);
             }
             if (msg.startsWith("clear")) {
-                chatMemoryStore.deleteMessages(userName);
+                chatMemoryStore.deleteMessages(CommonUtil.tail(userName, 64));
             }
             if (msg.startsWith("end")) {
 //                chatMemoryStore.deleteMessages(userName);
@@ -82,7 +83,7 @@ public class GptService {
     public String textDialog(GptSession session, String userMsg) {
         String result = "";
         ChatLanguageModel chatModel = session.getChatModel();
-        String userName = session.userName;
+        String userName = session.getShortName();
         Assistant assistant = AiServices.builder(Assistant.class)
                 .chatLanguageModel(chatModel)
                 .tools(new WebPageTool())
@@ -94,7 +95,7 @@ public class GptService {
                 .build();
         List<String> failureWords = Arrays.asList("抱歉", "由于网络问题", "请稍后再尝试");
 //        System.out.println("++++++++++");
-//        chatMemoryStore.getMessages(session.userName).forEach(item ->
+//        chatMemoryStore.getMessages(userName).forEach(item ->
 //                System.out.println(item.toString().replace("\n", "\\n")));
 //        System.out.println("----------");
         try {
@@ -107,10 +108,11 @@ public class GptService {
                                         "ELSE YOU OUTPUT `" + String.join("`, `", failureWords) +
                                         "` AROUND YOUR ANSWER"),
                         UserMessage.from(userMsg)).content().text();
-                chatMemoryStore.getMessages(session.userName).add(AiMessage.from(result));
+                chatMemoryStore.getMessages(userName).add(AiMessage.from(result));
             } catch (Exception e1) {
                 return String.join(", ", failureWords);
             }
+//            result += "\n Details => e: " + e.getMessage();
         }
         filterNoise(session, failureWords);
         return result;
@@ -118,7 +120,7 @@ public class GptService {
 
     private static void filterNoise(GptSession session, List<String> keywords) {
         GlobalThreadPool.CACHED_EXECUTOR.submit(() -> {
-            List<ChatMessage> chatMessages = chatMemoryStore.getMessages(session.userName);
+            List<ChatMessage> chatMessages = chatMemoryStore.getMessages(session.getShortName());
             List<Integer> intervals = IntStream.range(0, chatMessages.size())
                     .filter(i -> chatMessages.get(i) instanceof UserMessage)
                     .boxed().collect(Collectors.toList());
@@ -153,13 +155,13 @@ public class GptService {
     public boolean toolRouter(GptSession session, String userMsg) {
         ChatLanguageModel chatModel = session.getChatModel();
         Router router = AiServices.builder(Router.class).chatLanguageModel(chatModel).build();
-        return router.routeTool(session.userName, userMsg);
+        return router.routeTool(session.getShortName(), userMsg);
     }
 
     public boolean imageRouter(GptSession session, String userMsg) {
         ChatLanguageModel chatModel = session.getChatModel();
         Router router = AiServices.builder(Router.class).chatLanguageModel(chatModel).build();
-        return router.routeDraw(session.userName, userMsg);
+        return router.routeDraw(session.getShortName(), userMsg);
     }
 
     public GptSession login(String userName, boolean strict) {
@@ -189,7 +191,7 @@ public class GptService {
 
     public static void main(String[] args) {
         GptService gptService = new GptService();
-        GptSession gptSession = gptService.login("test", false);
+        GptSession gptSession = gptService.login("test1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", false);
         Scanner scanner = new Scanner(System.in);
         while (scanner.hasNext()) {
             String question = scanner.nextLine();

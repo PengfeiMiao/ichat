@@ -1,5 +1,6 @@
 package com.mafiadev.ichat.llm;
 
+import com.mafiadev.ichat.util.CommonUtil;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.image.ImageModel;
 import lombok.Data;
@@ -12,6 +13,7 @@ public class GptSession {
     ImageModel imageModel;
     String tips;
     Boolean strict;
+    String shortName;
 
     public GptSession(String userName, Boolean login, ChatLanguageModel chatModel, ImageModel imageModel, String tips, Boolean strict) {
         this.userName = userName;
@@ -20,6 +22,7 @@ public class GptSession {
         this.imageModel = imageModel;
         this.tips = tips;
         this.strict = strict;
+        this.shortName = CommonUtil.tail(userName, 64);
     }
 
     public void reset() {

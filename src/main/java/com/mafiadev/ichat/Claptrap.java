@@ -6,6 +6,7 @@ import com.mafiadev.ichat.task.TaskTrigger;
 import com.mafiadev.ichat.util.FileUtil;
 import com.meteor.wechatbc.impl.plugin.BasePlugin;
 
+@SuppressWarnings("ALL")
 public class Claptrap extends BasePlugin {
     @Override
     public void onLoad() {

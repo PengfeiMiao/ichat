@@ -20,8 +20,7 @@ public interface Assistant {
                     "2) \\gpt end: 结束会话\n" +
                     "3) \\gpt clear: 清空会话记录\n" +
                     "4) #image + 文本: 图片生成请求，需要在会话中执行才可生效\n" +
-                    "```",
-            "IF CONDITION 只有`第一次`输入问题 ELSE YOU OUTPUT `欢迎`提示, 后续提问不要再给出欢迎提示"
+                    "```"
     })
     String chat(@MemoryId @UserName String userName, @UserMessage String message);
 }
