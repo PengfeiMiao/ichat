@@ -14,11 +14,13 @@ public class GptSession {
     String tips;
     Boolean strict;
     String shortName;
+    ChatLanguageModel gpt4Model;
 
-    public GptSession(String userName, Boolean login, ChatLanguageModel chatModel, ImageModel imageModel, String tips, Boolean strict) {
+    public GptSession(String userName, Boolean login, ChatLanguageModel chatModel, ChatLanguageModel gpt4Model, ImageModel imageModel, String tips, Boolean strict) {
         this.userName = userName;
         this.login = login;
         this.chatModel = chatModel;
+        this.gpt4Model = gpt4Model;
         this.imageModel = imageModel;
         this.tips = tips;
         this.strict = strict;

@@ -25,7 +25,6 @@ import dev.langchain4j.store.memory.chat.InMemoryChatMemoryStore;
 import java.io.File;
 import java.net.URI;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -48,12 +47,12 @@ public class GptService {
     public static final ChatMemoryStore chatMemoryStore = new InMemoryChatMemoryStore();
 
     private final String BASE_URL;
-    private final String KEY;
+    private final List<String> KEYS;
     private final List<String> MODELS;
 
     private GptService(Claptrap plugin) {
         this.BASE_URL = plugin.getConfig().getString("baseUrl");
-        this.KEY = plugin.getConfig().getString("key");
+        this.KEYS = ConfigUtil.getConfigArr("keys");
         this.MODELS = ConfigUtil.getConfigArr("models");
     }
 
@@ -83,6 +82,9 @@ public class GptService {
     public String textDialog(GptSession session, String userMsg) {
         String result = "";
         ChatLanguageModel chatModel = session.getChatModel();
+        if(toolRouter(session, userMsg)) {
+            chatModel = session.getGpt4Model();
+        }
         String userName = session.getShortName();
         Assistant assistant = AiServices.builder(Assistant.class)
                 .chatLanguageModel(chatModel)
@@ -94,10 +96,8 @@ public class GptService {
                         .build())
                 .build();
         List<String> failureWords = Arrays.asList("抱歉", "由于网络问题", "请稍后再尝试");
-//        System.out.println("++++++++++");
 //        chatMemoryStore.getMessages(userName).forEach(item ->
 //                System.out.println(item.toString().replace("\n", "\\n")));
-//        System.out.println("----------");
         try {
             result = assistant.chat(userName, userMsg);
         } catch (Exception e) {
@@ -167,25 +167,30 @@ public class GptService {
     public GptSession login(String userName, boolean strict) {
         ChatLanguageModel chatModel = OpenAiChatModel.builder()
                 .baseUrl(BASE_URL)
-                .apiKey(KEY)
+                .apiKey(KEYS.get(0))
                 .modelName(MODELS.get(0))
+                .build();
+        ChatLanguageModel gpt4Model = OpenAiChatModel.builder()
+                .baseUrl(BASE_URL)
+                .apiKey(KEYS.get(1))
+                .modelName(MODELS.get(1))
                 .build();
         ImageModel imageModel = OpenAiImageModel.builder()
                 .baseUrl(BASE_URL)
-                .apiKey(KEY)
+                .apiKey(KEYS.get(0))
                 .modelName("dall-e-2")
                 .responseFormat("b64_json")
                 .withPersisting()
                 .persistTo(FILE_PATH)
                 .build();
-        GptSession session = new GptSession(userName, true, chatModel, imageModel, null, strict);
+        GptSession session = new GptSession(userName, true, chatModel, gpt4Model, imageModel, null, strict);
         sessionHashMap.put(userName, session);
         return session;
     }
 
     public GptService() {
         this.BASE_URL = ConfigUtil.getConfig("baseUrl");
-        this.KEY = ConfigUtil.getConfig("key");
+        this.KEYS = ConfigUtil.getConfigArr("keys");
         this.MODELS = ConfigUtil.getConfigArr("models");
     }
 
