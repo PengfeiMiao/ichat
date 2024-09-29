@@ -30,4 +30,11 @@ public class CommonUtil {
         }
         return str.substring(str.length() - len);
     }
+
+    public static String removeSuffix(String str, String suffix) {
+        if (str.endsWith(suffix)) {
+            return str.substring(0, str.length() - suffix.length());
+        }
+        return str;
+    }
 }
