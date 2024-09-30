@@ -22,7 +22,7 @@ public class SqlLoader {
                 }
             });
         } catch (SQLException | IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
     }
 

@@ -37,4 +37,35 @@ public class CommonUtil {
         }
         return str;
     }
+
+    public static String convertToCamelCase(String input) {
+        StringBuilder result = new StringBuilder();
+        String[] words = input.toLowerCase().split("_");
+
+        for (int i = 0; i < words.length; i++) {
+            String word = words[i];
+            if (i > 0 && word.length() > 0) {
+                word = Character.toUpperCase(word.charAt(0)) + word.substring(1);
+            }
+            result.append(word);
+        }
+
+        return result.toString();
+    }
+
+    public static String convertToSnakeCase(String input) {
+        StringBuilder result = new StringBuilder();
+
+        for (int i = 0; i < input.length(); i++) {
+            char currentChar = input.charAt(i);
+
+            if (Character.isUpperCase(currentChar)) {
+                result.append("_").append(Character.toLowerCase(currentChar));
+            } else {
+                result.append(currentChar);
+            }
+        }
+
+        return result.toString().toUpperCase();
+    }
 }

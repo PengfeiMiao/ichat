@@ -4,8 +4,10 @@ import com.mafiadev.ichat.util.CommonUtil;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.image.ImageModel;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 public class GptSession {
     String userName;
     Boolean login;
