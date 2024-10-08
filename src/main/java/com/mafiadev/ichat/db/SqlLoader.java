@@ -18,18 +18,19 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.mafiadev.ichat.db.SqliteHelper.TYPE_MAP;
+import static com.meteor.wechatbc.plugin.PluginLoader.logger;
 
 public class SqlLoader {
 
     public static Map<String, List<DataField>> TABLE_SCHEMAS = new HashMap<>();
 
     static {
-        applyTableSchemas();
-        loadTableSchemas();
+        applySchemas();
+        loadSchemas();
         validateSchemas();
     }
 
-    private static void applyTableSchemas() {
+    private static void applySchemas() {
         try (Connection conn = SqliteHelper.prepareConnection()) {
             new SqlLoader().readSQLFiles().forEach((key, value) -> {
                 if (!SqliteHelper.exists(conn, key.toUpperCase())) {
@@ -72,7 +73,7 @@ public class SqlLoader {
         return sqlQueries;
     }
 
-    private static void loadTableSchemas() {
+    private static void loadSchemas() {
         try (Connection conn = SqliteHelper.prepareConnection()) {
             for (Class<?> tableClz : TableScanner.scanTables()) {
                 String tableName = tableClz.getAnnotation(TableA.class).value();
@@ -96,12 +97,18 @@ public class SqlLoader {
             for (Field field : fields) {
                 String fieldName = CommonUtil.convertToSnakeCase(field.getName());
                 FieldA fieldA = field.getAnnotation(FieldA.class);
+                boolean isDefined = false;
                 if(fieldA != null) {
                     fieldName = fieldA.value();
+                    isDefined = true;
                 }
                 List<String> types = TYPE_MAP.get(CommonUtil.getPrimitiveType(field.getType()));
                 if(types != null && !types.contains(dateTypeMap.get(fieldName))) {
-                    System.out.println(fieldName + " not valid");
+                    String message = fieldName + " not valid";
+                    logger.warn(message);
+                    if (isDefined) {
+                        throw new RuntimeException(message);
+                    }
                 }
             }
         }

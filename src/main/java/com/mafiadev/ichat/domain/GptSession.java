@@ -23,7 +23,6 @@ public class GptSession {
     @FieldA("STRICT")
     Boolean strict;
     String shortName;
-    @FieldA("GPT4_MODEL")
     ChatLanguageModel gpt4Model;
 
     public GptSession(String userName, Boolean login, ChatLanguageModel chatModel, ChatLanguageModel gpt4Model, ImageModel imageModel, String tips, Boolean strict) {

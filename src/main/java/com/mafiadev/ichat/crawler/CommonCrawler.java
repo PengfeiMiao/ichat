@@ -51,13 +51,13 @@ public class CommonCrawler {
                 }
             }
             crawlTreeUrls(doc, 2).forEach(item -> {
-                System.out.println(item);
+//                System.out.println(item);
                 htmls.add(crawlContent(item, isPersist));
             });
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        System.out.println(htmls);
+//        System.out.println(htmls);
         return htmls;
     }
 

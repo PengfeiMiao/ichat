@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.meteor.wechatbc.plugin.PluginLoader.logger;
+
 public class WeiBoCrawler {
     public static String crawlWeiboTops() {
         String html = "";
@@ -49,7 +51,7 @@ public class WeiBoCrawler {
                         return String.join("\n", news);
                     }
                 } else {
-                    System.out.println("Request failed");
+                    logger.warn("Request failed");
                 }
             } catch (Exception e) {
                 e.printStackTrace();

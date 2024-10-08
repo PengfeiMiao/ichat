@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.mafiadev.ichat.constant.Constant.FILE_PATH;
+import static com.meteor.wechatbc.plugin.PluginLoader.logger;
 
 public class SqliteHelper {
     public static final Path DB_PATH = Paths.get(FILE_PATH.toString(), "test.db");
@@ -35,7 +36,7 @@ public class SqliteHelper {
     private static Connection connection = null;
 
     static {
-        System.out.println(DB_PATH);
+        logger.info("Database location: " + DB_PATH);
         FileUtil.mkFile(DB_PATH);
     }
 
@@ -61,7 +62,7 @@ public class SqliteHelper {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println("Table created successfully");
+        logger.info("Table created successfully");
     }
 
     public static boolean exists(Connection conn, String tableName) {
@@ -111,7 +112,6 @@ public class SqliteHelper {
 
         try (Statement stmt = conn.createStatement()) {
             ResultSet rs = stmt.executeQuery("SELECT * FROM " + table + " limit " + limit + ";");
-            System.out.println("Schema: \n" + rs.getMetaData());
             while (rs.next()) {
                 T obj = clazz.getDeclaredConstructor().newInstance();
                 for (java.lang.reflect.Field field : clazz.getDeclaredFields()) {

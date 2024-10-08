@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static com.mafiadev.ichat.task.TaskTrigger.TASK_EXEC;
+import static com.meteor.wechatbc.plugin.PluginLoader.logger;
 
 public class IpPoolRefreshTask {
     public IpPoolRefreshTask() {
@@ -20,7 +21,7 @@ public class IpPoolRefreshTask {
         IpPoolCrawler ipPoolCrawler = new IpPoolCrawler();
         Runnable task1 = () -> {
             List<IpPort> list = ipPoolCrawler.refresh();
-            System.out.println("[IpPoolRefreshTask] task1, size: " + list.size());
+            logger.info("[IpPoolRefreshTask] task, size: " + list.size());
             CrawlerUtil.IP_PORT_THREAD_LOCAL.set(list);
         };
         Runnable task2 = () -> {

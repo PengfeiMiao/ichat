@@ -7,7 +7,6 @@ import com.alibaba.fastjson.TypeReference;
 import com.mafiadev.ichat.util.ConfigUtil;
 import com.mafiadev.ichat.util.CrawlerUtil;
 import com.mafiadev.ichat.util.FileUtil;
-import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -23,8 +22,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.mafiadev.ichat.constant.Constant.FILE_PATH;
+import static com.meteor.wechatbc.plugin.PluginLoader.logger;
 
-@Slf4j
 public class IpPoolCrawler {
     private static final Path ipPoolPath = Paths.get(FILE_PATH.toString(), "ip_pool.json");
     private static final int timeout = 1000;
@@ -64,7 +63,7 @@ public class IpPoolCrawler {
             cache = load();
         }
         ipPorts.addAll(cache);
-        System.out.println("[IpPoolCrawler] refresh, size: " + ipPorts.size());
+        logger.info("[IpPoolCrawler] refresh, size: " + ipPorts.size());
         return recheck(ipPorts);
     }
 
