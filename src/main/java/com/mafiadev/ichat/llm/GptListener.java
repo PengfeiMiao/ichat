@@ -2,6 +2,7 @@ package com.mafiadev.ichat.llm;
 
 import com.mafiadev.ichat.Claptrap;
 import com.mafiadev.ichat.admin.AdminService;
+import com.mafiadev.ichat.domain.GptSession;
 import com.mafiadev.ichat.util.CommonUtil;
 import com.meteor.wechatbc.entitiy.contact.Contact;
 import com.meteor.wechatbc.entitiy.message.Message;
@@ -57,7 +58,7 @@ public class GptListener implements Listener {
     }
 
     public Request getRequest(GptSession session, String msg) {
-        if (session.strict) {
+        if (session.getStrict()) {
             String ownerLoc = "@" + ownerName;
             if (!msg.contains(ownerLoc) && !msg.startsWith("\\gpt ")) {
                 return null;

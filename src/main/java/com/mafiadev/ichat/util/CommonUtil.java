@@ -68,4 +68,28 @@ public class CommonUtil {
 
         return result.toString().toUpperCase();
     }
+
+    public static Class<?> getPrimitiveType(Class<?> wrapperClass) {
+        if (wrapperClass == Integer.class) {
+            return int.class;
+        } else if (wrapperClass == Double.class) {
+            return double.class;
+        } else if (wrapperClass == Boolean.class) {
+            return boolean.class;
+        } else if (wrapperClass == Character.class) {
+            return char.class;
+        } else if (wrapperClass == Byte.class) {
+            return byte.class;
+        } else if (wrapperClass == Short.class) {
+            return short.class;
+        } else if (wrapperClass == Long.class) {
+            return long.class;
+        } else if (wrapperClass == Float.class) {
+            return float.class;
+        } else if (wrapperClass == String.class) {
+            return String.class;
+        } else {
+            return null;
+        }
+    }
 }

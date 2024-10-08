@@ -1,11 +1,9 @@
 package com.mafiadev.ichat.db;
 
-import com.mafiadev.ichat.llm.GptSession;
 import com.mafiadev.ichat.util.CommonUtil;
 import com.mafiadev.ichat.util.FileUtil;
 import lombok.NonNull;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -13,9 +11,11 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +24,14 @@ import static com.mafiadev.ichat.constant.Constant.FILE_PATH;
 
 public class SqliteHelper {
     public static final Path DB_PATH = Paths.get(FILE_PATH.toString(), "test.db");
+    public static final Map<Class<?>, List<String>> TYPE_MAP = new HashMap<Class<?>, List<String>>() {{
+        put(String.class, Arrays.asList("VARCHAR", "TEXT"));
+        put(int.class, Arrays.asList("INT", "INTEGER"));
+        put(long.class, Arrays.asList("BIGINT"));
+        put(boolean.class, Arrays.asList("TINYINT"));
+    }};
+
+    // todo: 多线程问题
     private static Connection connection = null;
 
     static {
@@ -31,8 +39,8 @@ public class SqliteHelper {
         FileUtil.mkFile(DB_PATH);
     }
 
-    public static Connection prepareConnection() {
-        if (connection != null) {
+    public static Connection prepareConnection() throws SQLException {
+        if (connection != null && !connection.isClosed()) {
             return connection;
         }
 
@@ -72,13 +80,60 @@ public class SqliteHelper {
         return exists;
     }
 
+    public static List<DataField> getSchema(Connection conn, @NonNull String table) {
+        table = table.toUpperCase();
+        List<DataField> dataFields = new ArrayList<>();
+
+        try (Statement stmt = conn.createStatement()) {
+            ResultSet rs = stmt.executeQuery("SELECT * FROM " + table + " limit 1;");
+            ResultSetMetaData metaData = rs.getMetaData();
+            for (int i = 1; i < metaData.getColumnCount(); i++) {
+                String columnName = metaData.getColumnName(i);
+                String columnType = metaData.getColumnTypeName(i);
+                dataFields.add(DataField.builder().name(columnName).type(columnType).build());
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return dataFields;
+    }
+
+
+    public static <T> List<T> selectOne(Connection conn, @NonNull String table, Class<T> clazz,
+                                        Map<String, Object> filter) {
+        return select(conn, table, clazz, filter, 1);
+    }
+
+    public static <T> List<T> select(Connection conn, @NonNull String table, Class<T> clazz, Map<String, Object> filter,
+                                     int limit) {
+        table = table.toUpperCase();
+        List<T> resultList = new ArrayList<>();
+
+        try (Statement stmt = conn.createStatement()) {
+            ResultSet rs = stmt.executeQuery("SELECT * FROM " + table + " limit " + limit + ";");
+            System.out.println("Schema: \n" + rs.getMetaData());
+            while (rs.next()) {
+                T obj = clazz.getDeclaredConstructor().newInstance();
+                for (java.lang.reflect.Field field : clazz.getDeclaredFields()) {
+                    convert(rs, obj, field);
+                }
+                resultList.add(obj);
+            }
+        } catch (SQLException | IllegalAccessException | InstantiationException | NoSuchMethodException |
+                 InvocationTargetException e) {
+            e.printStackTrace();
+        }
+
+        return resultList;
+    }
+
     public static void insert(Connection conn, @NonNull String table, Object obj) {
         table = table.toUpperCase();
         StringBuilder sql = new StringBuilder("INSERT INTO " + table + " (");
         Map<String, Object> data = new HashMap<>();
 
         try {
-            for (Field field : obj.getClass().getDeclaredFields()) {
+            for (java.lang.reflect.Field field : obj.getClass().getDeclaredFields()) {
                 data.put(CommonUtil.convertToSnakeCase(field.getName()), field.get(obj));
                 sql.append(CommonUtil.convertToSnakeCase(field.getName())).append(",");
             }
@@ -108,34 +163,13 @@ public class SqliteHelper {
         }
     }
 
-    public static <T> List<T> select(Connection conn, @NonNull String table, Class<T> clazz) {
-        table = table.toUpperCase();
-        List<T> resultList = new ArrayList<>();
-
-        try (Statement stmt = conn.createStatement()) {
-            ResultSet rs = stmt.executeQuery("SELECT * FROM " + table + ";");
-            while (rs.next()) {
-                T obj = clazz.getDeclaredConstructor().newInstance();
-                for (Field field : clazz.getDeclaredFields()) {
-                    convert(rs, obj, field);
-                }
-                resultList.add(obj);
-            }
-        } catch (SQLException | IllegalAccessException | InstantiationException | NoSuchMethodException |
-                 InvocationTargetException e) {
-            e.printStackTrace();
-        }
-
-        return resultList;
-    }
-
     public void update() {
     }
 
     public void delete() {
     }
 
-    private static <T> void convert(ResultSet rs, T obj, Field field) {
+    private static <T> void convert(ResultSet rs, T obj, java.lang.reflect.Field field) {
         try {
             String fieldName = field.getName();
             Object columnValue = rs.getObject(CommonUtil.convertToSnakeCase(fieldName));
@@ -158,7 +192,7 @@ public class SqliteHelper {
 
     public static void main(String[] args) {
         try (Connection conn = SqliteHelper.prepareConnection()) {
-            List<GptSession> select = SqliteHelper.select(conn, "session", GptSession.class);
+            List<?> select = SqliteHelper.getSchema(conn, "session");
             System.out.println(select);
         } catch (Exception e) {
             e.printStackTrace();

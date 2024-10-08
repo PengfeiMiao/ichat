@@ -1,23 +1,38 @@
 package com.mafiadev.ichat.db;
 
+import com.mafiadev.ichat.annotation.FieldA;
+import com.mafiadev.ichat.annotation.TableA;
+import com.mafiadev.ichat.annotation.TableScanner;
 import com.mafiadev.ichat.util.CommonUtil;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
+import static com.mafiadev.ichat.db.SqliteHelper.TYPE_MAP;
 
 public class SqlLoader {
 
+    public static Map<String, List<DataField>> TABLE_SCHEMAS = new HashMap<>();
+
     static {
-        try(Connection conn = SqliteHelper.prepareConnection()) {
+        applyTableSchemas();
+        loadTableSchemas();
+        validateSchemas();
+    }
+
+    private static void applyTableSchemas() {
+        try (Connection conn = SqliteHelper.prepareConnection()) {
             new SqlLoader().readSQLFiles().forEach((key, value) -> {
-                System.out.println(key + ": " + value);
-                if(!SqliteHelper.exists(conn, key.toUpperCase())) {
+                if (!SqliteHelper.exists(conn, key.toUpperCase())) {
                     SqliteHelper.createTable(conn, value);
                 }
             });
@@ -55,5 +70,44 @@ public class SqlLoader {
         }
 
         return sqlQueries;
+    }
+
+    private static void loadTableSchemas() {
+        try (Connection conn = SqliteHelper.prepareConnection()) {
+            for (Class<?> tableClz : TableScanner.scanTables()) {
+                String tableName = tableClz.getAnnotation(TableA.class).value();
+                List<DataField> dataFields = SqliteHelper.getSchema(conn, tableName);
+                TABLE_SCHEMAS.put(tableName, dataFields);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void validateSchemas() {
+        for (Class<?> tableClz : TableScanner.scanTables()) {
+            String tableName = tableClz.getAnnotation(TableA.class).value();
+            // 数据库中的表结构
+            List<DataField> dataFields = TABLE_SCHEMAS.get(tableName);
+            Map<String, String> dateTypeMap = dataFields.stream()
+                    .collect(Collectors.toMap(DataField::getName, DataField::getType));
+            // Pojo 对象反射信息
+            Field[] fields = tableClz.getDeclaredFields();
+            for (Field field : fields) {
+                String fieldName = CommonUtil.convertToSnakeCase(field.getName());
+                FieldA fieldA = field.getAnnotation(FieldA.class);
+                if(fieldA != null) {
+                    fieldName = fieldA.value();
+                }
+                List<String> types = TYPE_MAP.get(CommonUtil.getPrimitiveType(field.getType()));
+                if(types != null && !types.contains(dateTypeMap.get(fieldName))) {
+                    System.out.println(fieldName + " not valid");
+                }
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        validateSchemas();
     }
 }
