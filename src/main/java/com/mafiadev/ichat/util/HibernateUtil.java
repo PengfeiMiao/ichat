@@ -17,7 +17,7 @@ public class HibernateUtil {
             // Configure other Hibernate properties
             configuration.setProperty("hibernate.connection.url", "jdbc:sqlite:" + Constant.DB_PATH);
             if (initializeDatabase) {
-                configuration.setProperty("hibernate.hbm2ddl.auto", "create");
+                configuration.setProperty("hibernate.hbm2ddl.auto", "update");
             } else {
                 configuration.setProperty("hibernate.hbm2ddl.auto", "validate");
             }
