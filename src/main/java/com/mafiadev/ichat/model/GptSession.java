@@ -19,7 +19,6 @@ public class GptSession {
     ImageModel imageModel;
     String tips;
     Boolean strict;
-    String shortName;
     ChatLanguageModel gpt4Model;
 
     public GptSession(String userName, Boolean login, ChatLanguageModel chatModel, ChatLanguageModel gpt4Model, ImageModel imageModel, String tips, Boolean strict) {
@@ -30,7 +29,10 @@ public class GptSession {
         this.imageModel = imageModel;
         this.tips = tips;
         this.strict = strict;
-        this.shortName = CommonUtil.tail(userName, 64);
+    }
+
+    public String getShortName() {
+        return CommonUtil.tail(userName, 64);
     }
 
     public void reset() {

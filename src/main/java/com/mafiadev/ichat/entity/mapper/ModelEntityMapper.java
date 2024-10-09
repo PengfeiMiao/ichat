@@ -29,7 +29,6 @@ public interface ModelEntityMapper {
     @Mapping(target = "chatModel", expression = "java(deserializeChatModel(sessionEntity.getChatModel()))")
     @Mapping(target = "imageModel", expression = "java(deserializeImageModel(sessionEntity.getImageModel()))")
     @Mapping(target = "gpt4Model", expression = "java(deserializeChatModel(sessionEntity.getChatModel()))")
-    @Mapping(target = "shortName", expression = "java(com.mafiadev.ichat.util.CommonUtil.tail(sessionEntity.getUserName(), 64))")
     GptSession convertSessionEntityToModel(SessionEntity sessionEntity);
 
     List<GptSession> convertSessionEntitiesToModels(List<SessionEntity> sessionEntities);

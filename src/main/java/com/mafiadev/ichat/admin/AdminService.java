@@ -6,6 +6,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.mafiadev.ichat.Claptrap;
 import com.mafiadev.ichat.llm.GptService;
 import com.mafiadev.ichat.model.GptSession;
+import com.mafiadev.ichat.service.MessageService;
 import com.mafiadev.ichat.service.SessionService;
 import com.mafiadev.ichat.util.CacheUtil;
 import com.mafiadev.ichat.util.CommonUtil;
@@ -45,12 +46,14 @@ public class AdminService {
     private final String password;
     private final ContactManager contactManager;
     private final SessionService sessionService;
+    private final MessageService messageService;
 
     private AdminService(Claptrap plugin) {
         this.password = plugin.getConfig().getString("adminPwd");
         this.contactManager = plugin.getWeChatClient().getContactManager();
         this.sessionService = new SessionService();
-        load(this.contactManager, sessionService.getSessions(), GptService.chatMemoryStore);
+        this.messageService = new MessageService();
+        load(this.contactManager, sessionService.getSessions(), messageService.getChatMemoryStore());
     }
 
     public String handler(String sessionId, String msg) {
@@ -63,7 +66,7 @@ public class AdminService {
             }
             if (admins.contains(sessionId)) {
                 Map<String, GptSession> sessionHashMap = sessionService.getSessions();
-                ChatMemoryStore chatMemoryStore = GptService.chatMemoryStore;
+                ChatMemoryStore chatMemoryStore = messageService.getChatMemoryStore();
                 if (msg.startsWith("load")) {
                     load(this.contactManager, sessionHashMap, chatMemoryStore);
                     return "load success";

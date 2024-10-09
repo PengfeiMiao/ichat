@@ -7,6 +7,7 @@ import com.mafiadev.ichat.llm.agent.Assistant;
 import com.mafiadev.ichat.llm.agent.Router;
 import com.mafiadev.ichat.llm.tool.WebPageTool;
 import com.mafiadev.ichat.model.GptSession;
+import com.mafiadev.ichat.service.MessageService;
 import com.mafiadev.ichat.service.SessionService;
 import com.mafiadev.ichat.util.CommonUtil;
 import com.mafiadev.ichat.util.ConfigUtil;
@@ -15,14 +16,11 @@ import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.image.ImageModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiImageModel;
 import dev.langchain4j.service.AiServices;
-import dev.langchain4j.store.memory.chat.ChatMemoryStore;
-import dev.langchain4j.store.memory.chat.InMemoryChatMemoryStore;
 
 import java.io.File;
 import java.net.URI;
@@ -37,8 +35,6 @@ import java.util.stream.IntStream;
 import static com.mafiadev.ichat.constant.Constant.FILE_PATH;
 
 public class GptService {
-    public static ChatMemoryStore chatMemoryStore = new InMemoryChatMemoryStore();
-
     public static GptService INSTANCE;
     public static void init(Claptrap plugin) {
         INSTANCE = new GptService(plugin);
@@ -49,6 +45,7 @@ public class GptService {
     private final List<String> MODELS;
 
     private final SessionService sessionService = new SessionService();
+    private final MessageService messageService = new MessageService();
 
     private GptService(Claptrap plugin) {
         this.BASE_URL = plugin.getConfig().getString("baseUrl");
@@ -66,7 +63,7 @@ public class GptService {
                 session = login(userName, strict);
             }
             if (msg.startsWith("clear")) {
-                chatMemoryStore.deleteMessages(CommonUtil.tail(userName, 64));
+                messageService.removeMessages(userName);
             }
             if (msg.startsWith("end")) {
                 session.reset();
@@ -86,21 +83,17 @@ public class GptService {
         if(toolRouter(session, userMsg)) {
             chatModel = session.getGpt4Model();
         }
-        String userName = session.getShortName();
+        String userName = session.getUserName();
         Assistant assistant = AiServices.builder(Assistant.class)
                 .chatLanguageModel(chatModel)
                 .tools(new WebPageTool())
-                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.builder()
-                        .maxMessages(100)
-                        .chatMemoryStore(chatMemoryStore)
-                        .id(userName)
-                        .build())
+                .chatMemoryProvider(memoryId -> messageService.buildChatMemory(userName))
                 .build();
         List<String> failureWords = Arrays.asList("抱歉", "由于网络问题", "请稍后再尝试");
 //        chatMemoryStore.getMessages(userName).forEach(item ->
 //                System.out.println(item.toString().replace("\n", "\\n")));
         try {
-            result = assistant.chat(userName, userMsg);
+            result = assistant.chat(session.getShortName(), userMsg);
         } catch (Exception e) {
             try {
                 result = chatModel.generate(
@@ -109,7 +102,7 @@ public class GptService {
                                         "ELSE YOU OUTPUT `" + String.join("`, `", failureWords) +
                                         "` AROUND YOUR ANSWER"),
                         UserMessage.from(userMsg)).content().text();
-                chatMemoryStore.getMessages(userName).add(AiMessage.from(result));
+                messageService.addMessage(userName, AiMessage.from(result));
             } catch (Exception e1) {
                 return String.join(", ", failureWords);
             }
@@ -119,9 +112,9 @@ public class GptService {
         return result;
     }
 
-    private static void filterNoise(GptSession session, List<String> keywords) {
+    private void filterNoise(GptSession session, List<String> keywords) {
         GlobalThreadPool.CACHED_EXECUTOR.submit(() -> {
-            List<ChatMessage> chatMessages = chatMemoryStore.getMessages(session.getShortName());
+            List<ChatMessage> chatMessages = messageService.getMessages(session.getUserName());
             List<Integer> intervals = IntStream.range(0, chatMessages.size())
                     .filter(i -> chatMessages.get(i) instanceof UserMessage)
                     .boxed().collect(Collectors.toList());
@@ -205,7 +198,7 @@ public class GptService {
                 continue;
             }
             if (question.equals("admin clear")) {
-                AdminService.clear(new SessionService().getSessions(), chatMemoryStore);
+                AdminService.clear(new SessionService().getSessions(), new MessageService().getChatMemoryStore());
                 continue;
             }
             System.out.println("AI Answer: " + gptService.textDialog(gptSession, question));
