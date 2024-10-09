@@ -1,11 +1,13 @@
-package com.mafiadev.ichat.db;
+package com.mafiadev.ichat.dao.helper;
 
-import com.mafiadev.ichat.entity.SessionEntity;
+import cn.hutool.db.sql.ConditionBuilder;
+import com.mafiadev.ichat.util.CommonUtil;
 import com.mafiadev.ichat.util.HibernateUtil;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
 
+import javax.persistence.Table;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -14,6 +16,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mafiadev.ichat.constant.Constant.DB_PATH;
 
@@ -83,14 +86,19 @@ public class SqliteHelper {
         }
     }
 
-    public static <T> List<T> select(Class<T> clazz) {
+    public static <T> List<T> select(Class<T> clazz, ConditionBuilder conditionBuilder) {
+        String tableName = CommonUtil.convertToSnakeCase(clazz.getName());
+        if (clazz.getAnnotation(Table.class) != null) {
+            tableName = clazz.getAnnotation(Table.class).name();
+        }
         List<T> resultList = new ArrayList<>();
         try (SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
              Session session = sessionFactory.openSession()) {
             session.beginTransaction();
-            String hql = "FROM " + clazz.getName();
-            Query<T> query = session.createQuery(hql, clazz);
-//            query.setParameter("userName", userName);
+            String sql = "SELECT * FROM " + tableName + " WHERE " + conditionBuilder.build();
+            Query<T> query = session.createNativeQuery(sql, clazz);
+            AtomicInteger index = new AtomicInteger(1);
+            conditionBuilder.getParamValues().forEach(param -> query.setParameter(index.getAndIncrement(), param));
             resultList = query.list();
             session.getTransaction().commit();
         } catch (Exception e) {

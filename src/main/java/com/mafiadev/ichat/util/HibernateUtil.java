@@ -13,7 +13,7 @@ import javax.persistence.Table;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.mafiadev.ichat.db.SqliteHelper.validate;
+import static com.mafiadev.ichat.dao.helper.SqliteHelper.validate;
 
 public class HibernateUtil {
     private static final String packagePath = "com.mafiadev.ichat";

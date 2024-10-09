@@ -3,10 +3,11 @@ package com.mafiadev.ichat.llm;
 import com.mafiadev.ichat.Claptrap;
 import com.mafiadev.ichat.admin.AdminService;
 import com.mafiadev.ichat.constant.GlobalThreadPool;
-import com.mafiadev.ichat.model.GptSession;
 import com.mafiadev.ichat.llm.agent.Assistant;
 import com.mafiadev.ichat.llm.agent.Router;
 import com.mafiadev.ichat.llm.tool.WebPageTool;
+import com.mafiadev.ichat.model.GptSession;
+import com.mafiadev.ichat.service.SessionService;
 import com.mafiadev.ichat.util.CommonUtil;
 import com.mafiadev.ichat.util.ConfigUtil;
 import com.mafiadev.ichat.util.FileUtil;
@@ -28,37 +29,36 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.mafiadev.ichat.constant.Constant.FILE_PATH;
 
 public class GptService {
-    public static GptService INSTANCE;
+    public static ChatMemoryStore chatMemoryStore = new InMemoryChatMemoryStore();
 
+    public static GptService INSTANCE;
     public static void init(Claptrap plugin) {
         INSTANCE = new GptService(plugin);
     }
-
-    public static final Map<String, GptSession> sessionHashMap = new ConcurrentHashMap<>();
-    public static final ChatMemoryStore chatMemoryStore = new InMemoryChatMemoryStore();
 
     private final String BASE_URL;
     private final List<String> KEYS;
     private final List<String> MODELS;
 
+    private final SessionService sessionService = new SessionService();
+
     private GptService(Claptrap plugin) {
         this.BASE_URL = plugin.getConfig().getString("baseUrl");
         this.KEYS = ConfigUtil.getConfigArr("keys");
         this.MODELS = ConfigUtil.getConfigArr("models");
+        sessionService.loadSessions();
     }
 
     public GptSession initSession(String userName, String msg) {
-        GptSession session = sessionHashMap.get(userName);
+        GptSession session = sessionService.getSession(userName);
         if (msg.startsWith("\\gpt")) {
             msg = msg.replace("\\gpt", "").trim();
             if (msg.startsWith("start")) {
@@ -69,8 +69,8 @@ public class GptService {
                 chatMemoryStore.deleteMessages(CommonUtil.tail(userName, 64));
             }
             if (msg.startsWith("end")) {
-//                chatMemoryStore.deleteMessages(userName);
                 session.reset();
+                sessionService.updateSession(session);
             }
             return session;
         }
@@ -185,7 +185,7 @@ public class GptService {
                 .persistTo(FILE_PATH)
                 .build();
         GptSession session = new GptSession(userName, true, chatModel, gpt4Model, imageModel, null, strict);
-        sessionHashMap.put(userName, session);
+        sessionService.saveSession(session);
         return session;
     }
 
@@ -205,7 +205,7 @@ public class GptService {
                 continue;
             }
             if (question.equals("admin clear")) {
-                AdminService.clear(sessionHashMap, chatMemoryStore);
+                AdminService.clear(new SessionService().getSessions(), chatMemoryStore);
                 continue;
             }
             System.out.println("AI Answer: " + gptService.textDialog(gptSession, question));
