@@ -3,11 +3,17 @@ package com.mafiadev.ichat.model;
 import com.mafiadev.ichat.util.CommonUtil;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.image.ImageModel;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class GptSession {
     String userName;
     Boolean login;
@@ -37,3 +43,4 @@ public class GptSession {
         this.setStrict(false);
     }
 }
+

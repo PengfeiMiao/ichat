@@ -4,18 +4,20 @@ import com.mafiadev.ichat.entity.SessionEntity;
 import com.mafiadev.ichat.util.HibernateUtil;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.query.Query;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import static com.mafiadev.ichat.constant.Constant.DB_PATH;
 
 public class SqliteHelper {
-
     private static Connection connection = null;
 
     private static Connection prepareConnection() throws SQLException {
@@ -48,28 +50,52 @@ public class SqliteHelper {
         return isValid;
     }
 
-    public static void main(String[] args) {
-//        try (Connection conn = SqliteHelper.prepareConnection()) {
-//            List<?> select = SqliteHelper.getSchema(conn, "session");
-//            System.out.println(select);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-
-//        SessionEntity entity = ModelEntityMapper.MAPPER.convertSessionModelToEntity(new GptSession());
-//        System.out.println(entity);
-
-        SessionFactory sessionFactory;
-        try {
-            sessionFactory = HibernateUtil.getSessionFactory(!validate(TableScanner.scanTables()));
-            Session session = sessionFactory.openSession();
+    public static void insert(Object obj) {
+        try (SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
+             Session session = sessionFactory.openSession()) {
             session.beginTransaction();
-            session.save(SessionEntity.builder().userName("test1234").build());
+            session.save(obj);
             session.getTransaction().commit();
-            session.close();
-            sessionFactory.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static void delete(Object obj) {
+        try (SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
+             Session session = sessionFactory.openSession()) {
+            session.beginTransaction();
+            session.delete(obj);
+            session.getTransaction().commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void update(Object obj) {
+        try (SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
+             Session session = sessionFactory.openSession()) {
+            session.beginTransaction();
+            session.update(obj);
+            session.getTransaction().commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static <T> List<T> select(Class<T> clazz) {
+        List<T> resultList = new ArrayList<>();
+        try (SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
+             Session session = sessionFactory.openSession()) {
+            session.beginTransaction();
+            String hql = "FROM " + clazz.getName();
+            Query<T> query = session.createQuery(hql, clazz);
+//            query.setParameter("userName", userName);
+            resultList = query.list();
+            session.getTransaction().commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return resultList;
     }
 }
