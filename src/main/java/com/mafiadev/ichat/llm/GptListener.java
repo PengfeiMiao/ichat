@@ -2,7 +2,7 @@ package com.mafiadev.ichat.llm;
 
 import com.mafiadev.ichat.Claptrap;
 import com.mafiadev.ichat.admin.AdminService;
-import com.mafiadev.ichat.domain.GptSession;
+import com.mafiadev.ichat.model.GptSession;
 import com.mafiadev.ichat.util.CommonUtil;
 import com.meteor.wechatbc.entitiy.contact.Contact;
 import com.meteor.wechatbc.entitiy.message.Message;

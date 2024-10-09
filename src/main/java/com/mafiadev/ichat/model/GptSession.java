@@ -1,7 +1,5 @@
-package com.mafiadev.ichat.domain;
+package com.mafiadev.ichat.model;
 
-import com.mafiadev.ichat.annotation.FieldA;
-import com.mafiadev.ichat.annotation.TableA;
 import com.mafiadev.ichat.util.CommonUtil;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.image.ImageModel;
@@ -10,17 +8,12 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-@TableA("SESSION")
 public class GptSession {
-    @FieldA("USER_NAME")
     String userName;
-    @FieldA("LOGIN")
     Boolean login;
     ChatLanguageModel chatModel;
     ImageModel imageModel;
-    @FieldA("TIPS")
     String tips;
-    @FieldA("STRICT")
     Boolean strict;
     String shortName;
     ChatLanguageModel gpt4Model;

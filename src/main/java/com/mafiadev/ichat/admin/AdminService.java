@@ -5,7 +5,7 @@ import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.mafiadev.ichat.Claptrap;
 import com.mafiadev.ichat.llm.GptService;
-import com.mafiadev.ichat.domain.GptSession;
+import com.mafiadev.ichat.model.GptSession;
 import com.mafiadev.ichat.util.CacheUtil;
 import com.mafiadev.ichat.util.CommonUtil;
 import com.mafiadev.ichat.util.FileUtil;
