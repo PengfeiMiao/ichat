@@ -2,7 +2,6 @@ package com.mafiadev.ichat.dao.helper;
 
 import cn.hutool.db.sql.ConditionBuilder;
 import com.mafiadev.ichat.util.CommonUtil;
-import com.mafiadev.ichat.util.HibernateUtil;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
@@ -54,7 +53,7 @@ public class SqliteHelper {
     }
 
     public static void insert(Object obj) {
-        try (SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
+        try (SessionFactory sessionFactory = HibernateHelper.getSessionFactory();
              Session session = sessionFactory.openSession()) {
             session.beginTransaction();
             session.save(obj);
@@ -64,8 +63,19 @@ public class SqliteHelper {
         }
     }
 
+    public static void batchInsert(Collection<?> list) {
+        try (SessionFactory sessionFactory = HibernateHelper.getSessionFactory();
+             Session session = sessionFactory.openSession()) {
+            session.beginTransaction();
+            list.forEach(session::save);
+            session.getTransaction().commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void delete(Object obj) {
-        try (SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
+        try (SessionFactory sessionFactory = HibernateHelper.getSessionFactory();
              Session session = sessionFactory.openSession()) {
             session.beginTransaction();
             session.delete(obj);
@@ -76,7 +86,7 @@ public class SqliteHelper {
     }
 
     public static void update(Object obj) {
-        try (SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
+        try (SessionFactory sessionFactory = HibernateHelper.getSessionFactory();
              Session session = sessionFactory.openSession()) {
             session.beginTransaction();
             session.update(obj);
@@ -92,7 +102,7 @@ public class SqliteHelper {
             tableName = clazz.getAnnotation(Table.class).name();
         }
         List<T> resultList = new ArrayList<>();
-        try (SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
+        try (SessionFactory sessionFactory = HibernateHelper.getSessionFactory();
              Session session = sessionFactory.openSession()) {
             session.beginTransaction();
             String sql = "SELECT * FROM " + tableName + " WHERE " + conditionBuilder.build();

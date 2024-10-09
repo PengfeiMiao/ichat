@@ -1,41 +1,26 @@
 package com.mafiadev.ichat.admin;
 
 import cn.hutool.core.collection.ConcurrentHashSet;
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONObject;
 import com.mafiadev.ichat.Claptrap;
-import com.mafiadev.ichat.llm.GptService;
 import com.mafiadev.ichat.model.GptSession;
 import com.mafiadev.ichat.service.MessageService;
 import com.mafiadev.ichat.service.SessionService;
 import com.mafiadev.ichat.util.CacheUtil;
 import com.mafiadev.ichat.util.CommonUtil;
-import com.mafiadev.ichat.util.FileUtil;
-import com.meteor.wechatbc.entitiy.contact.Contact;
-import com.meteor.wechatbc.impl.contact.ContactManager;
-import dev.langchain4j.data.message.AiMessage;
+import com.mafiadev.ichat.util.ConfigUtil;
 import dev.langchain4j.data.message.ChatMessage;
-import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.store.memory.chat.ChatMemoryStore;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.mafiadev.ichat.constant.Constant.FILE_PATH;
-
 public class AdminService {
     public static AdminService INSTANCE;
-    public static final Path JSON_PATH = Paths.get(FILE_PATH.toString(), "history.json");
 
     public static void init(Claptrap plugin) {
         INSTANCE = new AdminService(plugin);
@@ -44,16 +29,19 @@ public class AdminService {
     private static final List<String> admins = new ArrayList<>();
     private static final Set<String> sessionIds = new ConcurrentHashSet<>();
     private final String password;
-    private final ContactManager contactManager;
     private final SessionService sessionService;
     private final MessageService messageService;
 
-    private AdminService(Claptrap plugin) {
+    public AdminService(Claptrap plugin) {
         this.password = plugin.getConfig().getString("adminPwd");
-        this.contactManager = plugin.getWeChatClient().getContactManager();
         this.sessionService = new SessionService();
         this.messageService = new MessageService();
-        load(this.contactManager, sessionService.getSessions(), messageService.getChatMemoryStore());
+    }
+
+    public AdminService() {
+        this.password = ConfigUtil.getConfig("adminPwd");
+        this.sessionService = new SessionService();
+        this.messageService = new MessageService();
     }
 
     public String handler(String sessionId, String msg) {
@@ -68,11 +56,12 @@ public class AdminService {
                 Map<String, GptSession> sessionHashMap = sessionService.getSessions();
                 ChatMemoryStore chatMemoryStore = messageService.getChatMemoryStore();
                 if (msg.startsWith("load")) {
-                    load(this.contactManager, sessionHashMap, chatMemoryStore);
+                    sessionService.loadSessions();
+                    messageService.loadMessages();
                     return "load success";
                 }
                 if (msg.startsWith("store")) {
-                    store(sessionHashMap, chatMemoryStore);
+                    messageService.saveMessages();
                     return "store success";
                 }
                 if (msg.startsWith("clear")) {
@@ -86,27 +75,6 @@ public class AdminService {
             return "please login";
         }
         return null;
-    }
-
-    private static void load(ContactManager contactManager,
-                             Map<String, GptSession> sessionMap,
-                             ChatMemoryStore chatMemoryStore) {
-        String json = FileUtil.readJson(JSON_PATH);
-        History history = JSONObject.parseObject(json, History.class);
-        if (history != null) {
-            sessionIds.addAll(history.getHistories().keySet());
-            sessionIds.forEach(sessionId -> {
-                String[] sessionInfo = sessionId.split("&");
-                if (sessionInfo.length > 2) {
-                    Contact currentUser = contactManager.getContactByNickName(sessionInfo[1]);
-                    String newSessionId = CommonUtil.encode(currentUser.getUserName() + "&" + currentUser.getNickName());
-                    sessionMap.put(newSessionId,
-                            GptService.INSTANCE.login(newSessionId, "true".equals(sessionInfo[2])));
-                    chatMemoryStore.updateMessages(CommonUtil.tail(newSessionId, 64),
-                            history.getMessages(sessionId));
-                }
-            });
-        }
     }
 
     public static void clear(Map<String, GptSession> sessionMap, ChatMemoryStore chatMemoryStore) {
@@ -126,22 +94,7 @@ public class AdminService {
             }
         });
         CacheUtil.reset();
-        FileUtil.delete(JSON_PATH);
-    }
-
-    private static void store(Map<String, GptSession> sessionMap,
-                              ChatMemoryStore chatMemoryStore) {
-        History history = new History();
-        sessionIds.stream().filter(sessionMap::containsKey).forEach(sessionId -> {
-            String sessionInfo = CommonUtil.decode(sessionId);
-            String[] sessionFields = sessionInfo.split("&");
-            if (sessionFields.length > 1 && !"null".equals(sessionFields[1])) {
-                GptSession gptSession = sessionMap.get(sessionId);
-                String key = sessionInfo + "&" + gptSession.getStrict();
-                history.setMessages(key, chatMemoryStore.getMessages(gptSession.getShortName()));
-            }
-        });
-        FileUtil.writeJson(JSON_PATH, JSON.toJSONString(history));
+//        FileUtil.delete(JSON_PATH);
     }
 
     @NotNull
@@ -160,63 +113,5 @@ public class AdminService {
             sb.append(sessionInfo, start, end).append(":\n").append(String.join("\n", lines));
         }
         return sb.toString();
-    }
-
-    private static String getChatType(ChatMessage chatMessage) {
-        if (chatMessage instanceof SystemMessage) {
-            return "system";
-        }
-        if (chatMessage instanceof AiMessage && !((AiMessage) chatMessage).hasToolExecutionRequests()) {
-            return "ai";
-        }
-        if (chatMessage instanceof UserMessage) {
-            return "user";
-        }
-        return null;
-    }
-
-    @NoArgsConstructor
-    @Data
-    static class CustomMessage {
-        String type;
-        String text;
-
-        public CustomMessage(ChatMessage chatMessage) {
-            this.type = getChatType(chatMessage);
-            this.text = chatMessage.text();
-        }
-
-        public ChatMessage toChatMessage() {
-            switch (this.type) {
-                case "system":
-                    return SystemMessage.from(this.text);
-                case "ai":
-                    return AiMessage.from(this.text);
-                case "user":
-                    return UserMessage.from(this.text);
-                default:
-                    return null;
-            }
-        }
-    }
-
-    @Data
-    static class History {
-        Map<String, List<CustomMessage>> histories;
-
-        History() {
-            this.histories = new HashMap<>();
-        }
-
-        void setMessages(String key, List<ChatMessage> messages) {
-            List<CustomMessage> customMessages = messages.stream()
-                    .filter(it -> getChatType(it) != null)
-                    .map(CustomMessage::new).collect(Collectors.toList());
-            this.histories.put(key, customMessages);
-        }
-
-        List<ChatMessage> getMessages(String name) {
-            return this.histories.get(name).stream().map(CustomMessage::toChatMessage).collect(Collectors.toList());
-        }
     }
 }

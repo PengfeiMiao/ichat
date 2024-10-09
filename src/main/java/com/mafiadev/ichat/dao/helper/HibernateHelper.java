@@ -1,6 +1,7 @@
-package com.mafiadev.ichat.util;
+package com.mafiadev.ichat.dao.helper;
 
 import com.mafiadev.ichat.constant.Constant;
+import com.mafiadev.ichat.entity.MessageEntity;
 import com.mafiadev.ichat.entity.SessionEntity;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
@@ -15,18 +16,19 @@ import java.util.stream.Collectors;
 
 import static com.mafiadev.ichat.dao.helper.SqliteHelper.validate;
 
-public class HibernateUtil {
+public class HibernateHelper {
     private static final String packagePath = "com.mafiadev.ichat";
 
     private static volatile SessionFactory sessionFactory;
 
     public static SessionFactory getSessionFactory() {
-        if (sessionFactory == null) {
-            synchronized (HibernateUtil.class) {
-                if (sessionFactory == null) {
+        if (sessionFactory == null || sessionFactory.isClosed()) {
+            synchronized (HibernateHelper.class) {
+                if (sessionFactory == null || sessionFactory.isClosed()) {
                     Configuration configuration = new Configuration().configure("hibernate.cfg.xml");
                     // Add your entity classes
                     configuration.addAnnotatedClass(SessionEntity.class);
+                    configuration.addAnnotatedClass(MessageEntity.class);
                     // Configure other Hibernate properties
                     configuration.setProperty("hibernate.connection.url", "jdbc:sqlite:" + Constant.DB_PATH);
                     if (!validate(scanTables())) {

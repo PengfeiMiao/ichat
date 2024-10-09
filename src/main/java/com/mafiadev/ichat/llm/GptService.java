@@ -197,8 +197,9 @@ public class GptService {
             if (question == null || question.isEmpty()) {
                 continue;
             }
-            if (question.equals("admin clear")) {
-                AdminService.clear(new SessionService().getSessions(), new MessageService().getChatMemoryStore());
+            if (question.startsWith("\\admin")) {
+                System.out.println(new AdminService().handler(gptSession.getUserName(), question));
+                System.out.println();
                 continue;
             }
             System.out.println("AI Answer: " + gptService.textDialog(gptSession, question));
