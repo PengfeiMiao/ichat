@@ -171,7 +171,7 @@ public class GptService {
                 .build();
         ImageModel imageModel = OpenAiImageModel.builder()
                 .baseUrl(BASE_URL)
-                .apiKey(KEYS.get(0))
+                .apiKey(KEYS.get(1))
                 .modelName("dall-e-2")
                 .responseFormat("b64_json")
                 .withPersisting()
@@ -202,7 +202,8 @@ public class GptService {
                 System.out.println();
                 continue;
             }
-            System.out.println("AI Answer: " + gptService.textDialog(gptSession, question));
+//            System.out.println("AI Answer: " + gptService.textDialog(gptSession, question));
+            System.out.println("AI Answer: " + gptService.imageDialog(gptSession, question));
             System.out.println();
         }
     }
