@@ -1,4 +1,4 @@
-package com.mafiadev.ichat.admin;
+package com.mafiadev.ichat.llm.admin;
 
 import cn.hutool.core.collection.ConcurrentHashSet;
 import com.mafiadev.ichat.Claptrap;

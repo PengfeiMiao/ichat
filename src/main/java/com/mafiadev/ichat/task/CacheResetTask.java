@@ -1,6 +1,6 @@
 package com.mafiadev.ichat.task;
 
-import com.mafiadev.ichat.admin.AdminService;
+import com.mafiadev.ichat.llm.admin.AdminService;
 import com.mafiadev.ichat.llm.GptService;
 import com.mafiadev.ichat.service.MessageService;
 import com.mafiadev.ichat.service.SessionService;

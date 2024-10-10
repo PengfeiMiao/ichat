@@ -29,4 +29,6 @@ public class MessageEntity {
     String type;
     @Column(name = "TEXT")
     String text;
+    @Column(name = "STATUS")
+    Boolean status;
 }

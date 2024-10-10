@@ -89,13 +89,10 @@ public interface ModelEntityMapper {
         if (chatMessage instanceof SystemMessage) {
             return SYSTEM.getName();
         }
-        if (chatMessage instanceof AiMessage && !((AiMessage) chatMessage).hasToolExecutionRequests()) {
-            return AI.getName();
-        }
         if (chatMessage instanceof UserMessage) {
             return USER.getName();
         }
-        return null;
+        return AI.getName();
     }
 
     default ChatMessage getChatMessage(MessageEntity messageEntity) {
@@ -103,12 +100,10 @@ public interface ModelEntityMapper {
         switch (type) {
             case SYSTEM:
                 return SystemMessage.from(messageEntity.getText());
-            case AI:
-                return AiMessage.from(messageEntity.getText());
             case USER:
                 return UserMessage.from(messageEntity.getText());
             default:
-                return null;
+                return AiMessage.from(messageEntity.getText());
         }
     }
 }

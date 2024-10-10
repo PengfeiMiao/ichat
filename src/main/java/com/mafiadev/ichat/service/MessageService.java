@@ -40,6 +40,7 @@ public class MessageService {
         getMessages(userName).add(message);
     }
 
+    // todo: handle message status
     public void loadMessages() {
         sessionService.getSessions().keySet().forEach(userName ->
                 chatMemoryStore.updateMessages(getShortName(userName), messageRepository.findMessages(userName)));

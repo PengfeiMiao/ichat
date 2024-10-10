@@ -1,7 +1,7 @@
 package com.mafiadev.ichat.llm;
 
 import com.mafiadev.ichat.Claptrap;
-import com.mafiadev.ichat.admin.AdminService;
+import com.mafiadev.ichat.llm.admin.AdminService;
 import com.mafiadev.ichat.constant.GlobalThreadPool;
 import com.mafiadev.ichat.llm.agent.Assistant;
 import com.mafiadev.ichat.llm.agent.Router;
