@@ -31,10 +31,11 @@ public class HibernateHelper {
                     configuration.addAnnotatedClass(MessageEntity.class);
                     // Configure other Hibernate properties
                     configuration.setProperty("hibernate.connection.url", "jdbc:sqlite:" + Constant.DB_PATH);
-                    if (!validate(scanTables())) {
-                        configuration.setProperty("hibernate.hbm2ddl.auto", "update");
+                    String hbm2ddlMethod = "hibernate.hbm2ddl.auto";
+                    if (!validate(scanTables()) && configuration.getProperty(hbm2ddlMethod).equals("validate")) {
+                        configuration.setProperty(hbm2ddlMethod, "update");
                     } else {
-                        configuration.setProperty("hibernate.hbm2ddl.auto", "validate");
+                        configuration.setProperty(hbm2ddlMethod, "validate");
                     }
 
                     sessionFactory = configuration.buildSessionFactory();
