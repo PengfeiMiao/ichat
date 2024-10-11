@@ -13,6 +13,7 @@ import com.meteor.wechatbc.impl.event.Listener;
 import com.meteor.wechatbc.impl.event.sub.ReceiveMessageEvent;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -21,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 public class GptListener implements Listener {
 
     private final Claptrap plugin;

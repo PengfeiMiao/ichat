@@ -21,6 +21,7 @@ import dev.langchain4j.model.image.ImageModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiImageModel;
 import dev.langchain4j.service.AiServices;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.net.URI;
@@ -34,6 +35,7 @@ import java.util.stream.IntStream;
 
 import static com.mafiadev.ichat.constant.Constant.FILE_PATH;
 
+@Slf4j
 public class GptService {
     public static GptService INSTANCE;
     public static void init(Claptrap plugin) {
@@ -198,12 +200,12 @@ public class GptService {
                 continue;
             }
             if (question.startsWith("\\admin")) {
-                System.out.println(new AdminService().handler(gptSession.getUserName(), question));
+                log.info(new AdminService().handler(gptSession.getUserName(), question));
                 System.out.println();
                 continue;
             }
-//            System.out.println("AI Answer: " + gptService.textDialog(gptSession, question));
-            System.out.println("AI Answer: " + gptService.imageDialog(gptSession, question));
+            log.info("AI Answer: " + gptService.textDialog(gptSession, question));
+//            log.info("AI Answer: " + gptService.imageDialog(gptSession, question));
             System.out.println();
         }
     }
