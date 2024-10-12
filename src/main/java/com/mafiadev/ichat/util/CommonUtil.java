@@ -17,11 +17,15 @@ public class CommonUtil {
     }
 
     public static String encode(String str) {
-        return Base64.getEncoder().encodeToString(str.getBytes(StandardCharsets.UTF_8));
+        String encodedStr = Base64.getUrlEncoder().encodeToString(str.getBytes(StandardCharsets.UTF_8));
+        return encodedStr.replaceAll("=+$", "");
     }
 
     public static String decode(String str) {
-        return new String(Base64.getDecoder().decode(str));
+        if (!str.endsWith("==")) {
+            str += "==";
+        }
+        return new String(Base64.getUrlDecoder().decode(str));
     }
 
     public static String tail(String str, int len) {

@@ -47,12 +47,12 @@ public interface ModelEntityMapper {
     @Mapping(target = "userName", source = "userName")
     @Mapping(target = "chatModel", expression = "java(serializeChatModel(session.getChatModel()))")
     @Mapping(target = "imageModel", expression = "java(serializeImageModel(session.getImageModel()))")
-    @Mapping(target = "gpt4Model", expression = "java(serializeChatModel(session.getGpt4Model()))")
+    @Mapping(target = "toolModel", expression = "java(serializeChatModel(session.getToolModel()))")
     SessionEntity convertSessionModelToEntity(GptSession session);
 
     @Mapping(target = "chatModel", expression = "java(deserializeChatModel(sessionEntity.getChatModel()))")
     @Mapping(target = "imageModel", expression = "java(deserializeImageModel(sessionEntity.getImageModel()))")
-    @Mapping(target = "gpt4Model", expression = "java(deserializeChatModel(sessionEntity.getChatModel()))")
+    @Mapping(target = "toolModel", expression = "java(deserializeChatModel(sessionEntity.getToolModel()))")
     GptSession convertSessionEntityToModel(SessionEntity sessionEntity);
 
     List<GptSession> convertSessionEntitiesToModels(List<SessionEntity> sessionEntities);
@@ -77,7 +77,7 @@ public interface ModelEntityMapper {
     default ImageModel deserializeImageModel(String modelName) {
         return OpenAiImageModel.builder()
                 .baseUrl(ConfigUtil.getConfig("baseUrl"))
-                .apiKey(ConfigUtil.getConfigArr("keys").get(0))
+                .apiKey(ConfigUtil.getConfigArr("keys").get(1))
                 .modelName(modelName)
                 .responseFormat("b64_json")
                 .withPersisting()

@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static com.mafiadev.ichat.constant.Constant.DB_PATH;
 import static com.mafiadev.ichat.constant.Constant.FILE_PATH;
 
 @Slf4j
@@ -83,7 +84,7 @@ public class GptService {
         String result = "";
         ChatLanguageModel chatModel = session.getChatModel();
         if(toolRouter(session, userMsg)) {
-            chatModel = session.getGpt4Model();
+            chatModel = session.getToolModel();
         }
         String userName = session.getUserName();
         Assistant assistant = AiServices.builder(Assistant.class)
@@ -188,11 +189,13 @@ public class GptService {
         this.BASE_URL = ConfigUtil.getConfig("baseUrl");
         this.KEYS = ConfigUtil.getConfigArr("keys");
         this.MODELS = ConfigUtil.getConfigArr("models");
+        sessionService.loadSessions();
     }
 
     public static void main(String[] args) {
+        System.out.println("DB url: jdbc:sqlite:" + DB_PATH);
         GptService gptService = new GptService();
-        GptSession gptSession = gptService.login("test1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", false);
+        GptSession gptSession = gptService.initSession("ODM2MzQ5MzczJk1QRg", "");
         Scanner scanner = new Scanner(System.in);
         while (scanner.hasNext()) {
             String question = scanner.nextLine();

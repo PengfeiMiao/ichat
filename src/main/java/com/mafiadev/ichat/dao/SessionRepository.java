@@ -38,8 +38,4 @@ public class SessionRepository {
                 ));
         return ModelEntityMapper.MAPPER.convertSessionEntitiesToModels(sessionEntities);
     }
-
-    public static void main(String[] args) {
-        System.out.println(new SessionRepository().findSessions());
-    }
 }

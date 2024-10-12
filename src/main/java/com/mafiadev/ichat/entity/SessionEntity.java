@@ -31,10 +31,10 @@ public class SessionEntity {
     String chatModel;
     @Column(name = "IMAGE_MODEL")
     String imageModel;
+    @Column(name = "TOOL_MODEL")
+    String toolModel;
     @Column(name = "TIPS")
     String tips;
     @Column(name = "STRICT")
     Boolean strict;
-    @Column(name = "GPT4_MODEL")
-    String gpt4Model;
 }

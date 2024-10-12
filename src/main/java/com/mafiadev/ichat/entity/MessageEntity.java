@@ -27,7 +27,7 @@ public class MessageEntity {
     String userName;
     @Column(name = "TYPE")
     String type;
-    @Column(name = "TEXT")
+    @Column(name = "TEXT", columnDefinition = "TEXT")
     String text;
     @Column(name = "STATUS")
     Boolean status;

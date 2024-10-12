@@ -19,13 +19,13 @@ public class GptSession {
     ImageModel imageModel;
     String tips;
     Boolean strict;
-    ChatLanguageModel gpt4Model;
+    ChatLanguageModel toolModel;
 
-    public GptSession(String userName, Boolean login, ChatLanguageModel chatModel, ChatLanguageModel gpt4Model, ImageModel imageModel, String tips, Boolean strict) {
+    public GptSession(String userName, Boolean login, ChatLanguageModel chatModel, ChatLanguageModel toolModel, ImageModel imageModel, String tips, Boolean strict) {
         this.userName = userName;
         this.login = login;
         this.chatModel = chatModel;
-        this.gpt4Model = gpt4Model;
+        this.toolModel = toolModel;
         this.imageModel = imageModel;
         this.tips = tips;
         this.strict = strict;
@@ -38,6 +38,7 @@ public class GptSession {
     public void reset() {
         this.setChatModel(null);
         this.setImageModel(null);
+        this.setToolModel(null);
         this.setLogin(false);
         this.setTips("bye");
         this.setStrict(false);
