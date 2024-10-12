@@ -26,14 +26,20 @@ public class SessionService {
     }
 
     public void saveSession(GptSession session) {
-        if(sessionRepository.saveSession(session)) {
-            sessionHashMap.putIfAbsent(session.getUserName(), session);
+        sessionHashMap.putIfAbsent(session.getUserName(), session);
+        if(!session.getUserName().startsWith("@")) {
+            if (sessionRepository.isExistSessionByUserName(session.getUserName())) {
+                sessionRepository.updateSession(session);
+            } else {
+                sessionRepository.saveSession(session);
+            }
         }
     }
 
     public void updateSession(GptSession session) {
-        if(sessionRepository.updateSession(session)) {
-            sessionHashMap.put(session.getUserName(), session);
+        sessionHashMap.put(session.getUserName(), session);
+        if(!session.getUserName().startsWith("@")) {
+            sessionRepository.updateSession(session);
         }
     }
 }

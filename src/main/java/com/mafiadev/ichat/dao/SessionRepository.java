@@ -18,12 +18,21 @@ public class SessionRepository {
 
     public boolean updateSession(GptSession session) {
         SessionEntity sessionEntity = ModelEntityMapper.MAPPER.convertSessionModelToEntity(session);
-        SqliteHelper.update(sessionEntity);
+        SqliteHelper.updateBy(sessionEntity, ConditionBuilder.of(
+                new Condition("USER_NAME", session.getUserName())
+        ));
         return sessionEntity.getId() != null;
     }
 
+    public boolean isExistSessionByUserName(String userName) {
+        return SqliteHelper.countBy(SessionEntity.class,
+                ConditionBuilder.of(
+                        new Condition("USER_NAME", userName)
+                )) > 0;
+    }
+
     public List<GptSession> findSessions() {
-        List<SessionEntity> sessionEntities = SqliteHelper.select(SessionEntity.class,
+        List<SessionEntity> sessionEntities = SqliteHelper.selectBy(SessionEntity.class,
                 ConditionBuilder.of(
                         new Condition("LOGIN", true)
                 ));

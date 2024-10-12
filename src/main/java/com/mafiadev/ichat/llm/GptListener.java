@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 public class GptListener implements Listener {
@@ -112,9 +114,13 @@ public class GptListener implements Listener {
         try {
             senderUserName = message.getFromUserName() != null ?
                     message.getFromUserName() : message.getSenderUserName();
-            String nickName = Optional.ofNullable(contactManager.getContact(senderUserName))
-                    .map(Contact::getNickName).orElse("null");
-            sessionId = CommonUtil.encode(senderUserName + "&" + nickName);
+            Optional<Contact> contact = Optional.ofNullable(contactManager.getContact(message.getSenderUserName()));
+            String nickName = contact.map(Contact::getNickName).orElse("");
+            String headImgUrl = contact.map(Contact::getHeadImgUrl).orElse("");
+            Pattern r = Pattern.compile("seq=(\\d+)");
+            Matcher m = r.matcher(headImgUrl);
+            String uuid = m.find() ? m.group(1) : "";
+            sessionId = CommonUtil.encode((uuid.isEmpty() ? senderUserName : uuid) + "&" + nickName);
         } catch (Exception e) {
             e.printStackTrace();
             return;

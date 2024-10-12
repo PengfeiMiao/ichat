@@ -18,7 +18,7 @@ public class MessageRepository {
     }
 
     public List<ChatMessage> findMessages(String sessionId) {
-        List<MessageEntity> messageEntities = SqliteHelper.select(MessageEntity.class,
+        List<MessageEntity> messageEntities = SqliteHelper.selectBy(MessageEntity.class,
                 ConditionBuilder.of(
                         new Condition("USER_NAME", sessionId)
                 ));
