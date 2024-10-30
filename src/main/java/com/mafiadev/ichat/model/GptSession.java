@@ -32,7 +32,7 @@ public class GptSession {
     }
 
     public String getShortName() {
-        return CommonUtil.tail(userName, 64);
+        return CommonUtil.digest(userName);
     }
 
     public void reset() {

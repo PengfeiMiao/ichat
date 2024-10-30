@@ -53,6 +53,6 @@ public class MessageService {
 
     @NotNull
     private static String getShortName(String userName) {
-        return CommonUtil.tail(userName, 64);
+        return CommonUtil.digest(userName);
     }
 }

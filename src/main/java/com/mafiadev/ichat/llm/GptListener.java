@@ -64,6 +64,7 @@ public class GptListener implements Listener {
     public Request getRequest(GptSession session, String msg) {
         if (session.getStrict()) {
             String ownerLoc = "@" + ownerName;
+            log.info("ownerLoc: " + ownerLoc);
             if (!msg.contains(ownerLoc) && !msg.startsWith("\\gpt ")) {
                 return null;
             } else {
@@ -114,13 +115,8 @@ public class GptListener implements Listener {
         try {
             senderUserName = message.getFromUserName() != null ?
                     message.getFromUserName() : message.getSenderUserName();
-            Optional<Contact> contact = Optional.ofNullable(contactManager.getContact(message.getSenderUserName()));
-            String nickName = contact.map(Contact::getNickName).orElse("");
-            String headImgUrl = contact.map(Contact::getHeadImgUrl).orElse("");
-            Pattern r = Pattern.compile("seq=(\\d+)");
-            Matcher m = r.matcher(headImgUrl);
-            String uuid = m.find() ? m.group(1) : "";
-            sessionId = CommonUtil.encode((uuid.isEmpty() ? senderUserName : uuid) + "&" + nickName);
+            sessionId = CommonUtil.encode(getSessionId(message.getFromUserName())
+                    + "&" + getSessionId(message.getSenderUserName()));
         } catch (Exception e) {
             e.printStackTrace();
             return;
@@ -155,6 +151,19 @@ public class GptListener implements Listener {
                 sender.sendImage(senderUserName, image);
             }
         });
+    }
+
+    @NotNull
+    private String getSessionId(String userName) {
+        String sessionId;
+        Optional<Contact> contact = Optional.ofNullable(contactManager.getContact(userName));
+        String nickName = contact.map(Contact::getNickName).orElse("");
+        String headImgUrl = contact.map(Contact::getHeadImgUrl).orElse("");
+        Pattern r = Pattern.compile("seq=(\\d+)");
+        Matcher m = r.matcher(headImgUrl);
+        String uuid = m.find() ? m.group(1) : "";
+        sessionId = (uuid.isEmpty() ? userName : uuid) + "&" + nickName;
+        return sessionId;
     }
 
     private void sendLongMessage(String senderUserName, String text) {

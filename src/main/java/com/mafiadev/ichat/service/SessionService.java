@@ -26,7 +26,7 @@ public class SessionService {
     }
 
     public void saveSession(GptSession session) {
-        sessionHashMap.putIfAbsent(session.getUserName(), session);
+        sessionHashMap.put(session.getUserName(), session);
         if(!session.getUserName().startsWith("@")) {
             if (sessionRepository.isExistSessionByUserName(session.getUserName())) {
                 sessionRepository.updateSession(session);

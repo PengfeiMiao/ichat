@@ -83,7 +83,7 @@ public class AdminService {
 
     public static void clear(Map<String, GptSession> sessionMap, ChatMemoryStore chatMemoryStore, double rate) {
         sessionMap.keySet().forEach(sessionId -> {
-            List<ChatMessage> messages = chatMemoryStore.getMessages(CommonUtil.tail(sessionId, 64));
+            List<ChatMessage> messages = chatMemoryStore.getMessages(CommonUtil.digest(sessionId));
             // 3 是初始化的3条系统消息
             if (messages.size() > 3) {
                 int toIndex = (int) ((messages.size() - 3) * rate + 3);
@@ -101,7 +101,7 @@ public class AdminService {
     private static String output(ChatMemoryStore chatMemoryStore) {
         StringBuilder sb = new StringBuilder();
         for (String sessionId : sessionIds) {
-            String msgId = CommonUtil.tail(sessionId, 64);
+            String msgId = CommonUtil.digest(sessionId);
             if (chatMemoryStore.getMessages(msgId) == null) {
                 continue;
             }

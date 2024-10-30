@@ -2,6 +2,8 @@ package com.mafiadev.ichat.util;
 
 import org.apache.commons.text.similarity.JaroWinklerDistance;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Random;
@@ -71,6 +73,20 @@ public class CommonUtil {
         }
 
         return result.toString().toUpperCase();
+    }
+
+    public static String digest(String input) {
+        StringBuilder sb = new StringBuilder();
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] digest = md.digest(input.getBytes());
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b));
+            }
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return sb.toString();
     }
 
     public static Class<?> getPrimitiveType(Class<?> wrapperClass) {
