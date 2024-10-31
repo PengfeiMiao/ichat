@@ -71,7 +71,7 @@ public class GptListener implements Listener {
                 msg = msg.replaceFirst(ownerLoc, "");
             }
         }
-        if (msg.startsWith("#image") || CommonUtil.isSimilar(msg, "画个", 0.33)) {
+        if (msg.contains("#image") || CommonUtil.isSimilar(msg, "画个", 0.33)) {
             return new Request(AnswerType.IMAGE, msg.replaceFirst("#image", "").trim());
         }
         return new Request(AnswerType.TEXT, msg);
