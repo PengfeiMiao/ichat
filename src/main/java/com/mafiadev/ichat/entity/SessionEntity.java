@@ -37,4 +37,6 @@ public class SessionEntity {
     String tips;
     @Column(name = "STRICT")
     Boolean strict;
+    @Column(name = "MULTIPLE")
+    Boolean multiple;
 }

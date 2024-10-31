@@ -116,7 +116,7 @@ public class GptListener implements Listener {
             senderUserName = message.getFromUserName() != null ?
                     message.getFromUserName() : message.getSenderUserName();
             sessionId = CommonUtil.encode(getSessionId(message.getFromUserName())
-                    + "&" + getSessionId(message.getSenderUserName()));
+                    + "&&" + getSessionId(message.getSenderUserName()));
         } catch (Exception e) {
             e.printStackTrace();
             return;

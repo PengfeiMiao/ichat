@@ -1,8 +1,8 @@
 package com.mafiadev.ichat.llm;
 
 import com.mafiadev.ichat.Claptrap;
-import com.mafiadev.ichat.llm.admin.AdminService;
 import com.mafiadev.ichat.constant.GlobalThreadPool;
+import com.mafiadev.ichat.llm.admin.AdminService;
 import com.mafiadev.ichat.llm.agent.Assistant;
 import com.mafiadev.ichat.llm.agent.Router;
 import com.mafiadev.ichat.llm.tool.WebPageTool;
@@ -59,20 +59,34 @@ public class GptService {
 
     public GptSession initSession(String userName, String msg) {
         GptSession session = sessionService.getSession(userName);
+        String[] groupUser = CommonUtil.decode(userName).split("&&");
+        boolean inGroup = !groupUser[0].equals(groupUser[1]);
+        String groupName = CommonUtil.encode(groupUser[0]);
         if (msg.startsWith("\\gpt")) {
+            boolean multiple = CommonUtil.isMatch(msg, "^\\\\gpt .*-g") && inGroup;
             msg = msg.replace("\\gpt", "").trim();
             if (msg.startsWith("start")) {
-                boolean strict = msg.startsWith("start -s");
-                session = login(userName, strict);
+                boolean strict = CommonUtil.isMatch(msg, "^start .*-s");
+                if (multiple) {
+                    session.reset(null);
+                    sessionService.updateSession(session);
+                }
+                session = login(multiple ? groupName : userName, strict, multiple);
+            }
+            if (multiple) {
+                session = sessionService.getSession(groupName);
             }
             if (msg.startsWith("clear")) {
-                messageService.removeMessages(userName);
+                messageService.removeMessages(multiple ? groupName : userName);
             }
             if (msg.startsWith("end")) {
-                session.reset();
+                session.reset("bye");
                 sessionService.updateSession(session);
             }
             return session;
+        }
+        if (inGroup && (session == null || !session.getLogin())) {
+            session = sessionService.getSession(groupName);
         }
         if (session != null) {
             session.setTips(null);
@@ -161,7 +175,7 @@ public class GptService {
         return router.routeDraw(session.getShortName(), userMsg);
     }
 
-    public GptSession login(String userName, boolean strict) {
+    public GptSession login(String userName, boolean strict, boolean multiple) {
         ChatLanguageModel chatModel = OpenAiChatModel.builder()
                 .baseUrl(BASE_URL)
                 .apiKey(KEYS.get(0))
@@ -180,7 +194,7 @@ public class GptService {
                 .withPersisting()
                 .persistTo(FILE_PATH)
                 .build();
-        GptSession session = new GptSession(userName, true, chatModel, gpt4Model, imageModel, null, strict);
+        GptSession session = new GptSession(userName, true, chatModel, gpt4Model, imageModel, null, strict, multiple);
         sessionService.saveSession(session);
         return session;
     }
@@ -195,19 +209,22 @@ public class GptService {
     public static void main(String[] args) {
         System.out.println("DB url: jdbc:sqlite:" + DB_PATH);
         GptService gptService = new GptService();
-        GptSession gptSession = gptService.initSession("ODM2MzQ5MzczJk1QRg", "");
+        String userName = "ODM2MzUyNDkxJm1hZmlhMjMzJiY4MzYzNDkzNzMmTVBG";
         Scanner scanner = new Scanner(System.in);
         while (scanner.hasNext()) {
             String question = scanner.nextLine();
             if (question == null || question.isEmpty()) {
                 continue;
             }
+            GptSession gptSession = gptService.initSession(userName, question);
             if (question.startsWith("\\admin")) {
                 log.info(new AdminService().handler(gptSession.getUserName(), question));
                 System.out.println();
                 continue;
             }
-            log.info("AI Answer: " + gptService.textDialog(gptSession, question));
+            if (gptSession.getLogin()) {
+                log.info("AI Answer: " + gptService.textDialog(gptSession, question));
+            }
 //            log.info("AI Answer: " + gptService.imageDialog(gptSession, question));
             System.out.println();
         }

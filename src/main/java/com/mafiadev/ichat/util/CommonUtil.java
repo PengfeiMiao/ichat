@@ -7,6 +7,8 @@ import java.security.NoSuchAlgorithmException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class CommonUtil {
     public static int randomIndex(int bound) {
@@ -19,14 +21,10 @@ public class CommonUtil {
     }
 
     public static String encode(String str) {
-        String encodedStr = Base64.getUrlEncoder().encodeToString(str.getBytes(StandardCharsets.UTF_8));
-        return encodedStr.replaceAll("=+$", "");
+        return Base64.getUrlEncoder().encodeToString(str.getBytes(StandardCharsets.UTF_8));
     }
 
     public static String decode(String str) {
-        if (!str.endsWith("==")) {
-            str += "==";
-        }
         return new String(Base64.getUrlDecoder().decode(str));
     }
 
@@ -111,5 +109,11 @@ public class CommonUtil {
         } else {
             return null;
         }
+    }
+
+    public static boolean isMatch(String str, String regex) {
+        Pattern r2 = Pattern.compile(regex);
+        Matcher m2 = r2.matcher(str);
+        return m2.find();
     }
 }

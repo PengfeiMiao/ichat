@@ -16,31 +16,22 @@ public class GptSession {
     String userName;
     Boolean login;
     ChatLanguageModel chatModel;
+    ChatLanguageModel toolModel;
     ImageModel imageModel;
     String tips;
     Boolean strict;
-    ChatLanguageModel toolModel;
-
-    public GptSession(String userName, Boolean login, ChatLanguageModel chatModel, ChatLanguageModel toolModel, ImageModel imageModel, String tips, Boolean strict) {
-        this.userName = userName;
-        this.login = login;
-        this.chatModel = chatModel;
-        this.toolModel = toolModel;
-        this.imageModel = imageModel;
-        this.tips = tips;
-        this.strict = strict;
-    }
+    Boolean multiple;
 
     public String getShortName() {
         return CommonUtil.digest(userName);
     }
 
-    public void reset() {
+    public void reset(String tips) {
         this.setChatModel(null);
         this.setImageModel(null);
         this.setToolModel(null);
         this.setLogin(false);
-        this.setTips("bye");
+        this.setTips(tips);
         this.setStrict(false);
     }
 }
