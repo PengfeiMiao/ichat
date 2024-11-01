@@ -3,6 +3,7 @@ package com.mafiadev.ichat.llm;
 import com.mafiadev.ichat.Claptrap;
 import com.mafiadev.ichat.llm.admin.AdminService;
 import com.mafiadev.ichat.model.GptSession;
+import com.mafiadev.ichat.model.Request;
 import com.mafiadev.ichat.util.CommonUtil;
 import com.meteor.wechatbc.entitiy.contact.Contact;
 import com.meteor.wechatbc.entitiy.message.Message;
@@ -11,8 +12,6 @@ import com.meteor.wechatbc.impl.HttpAPI;
 import com.meteor.wechatbc.impl.contact.ContactManager;
 import com.meteor.wechatbc.impl.event.Listener;
 import com.meteor.wechatbc.impl.event.sub.ReceiveMessageEvent;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,33 +47,6 @@ public class GptListener implements Listener {
         GptService.init(plugin);
         AdminService.init(plugin);
         plugin.getWeChatClient().getEventManager().registerPluginListener(plugin, this);
-    }
-
-    public enum AnswerType {
-        TEXT, IMAGE
-    }
-
-    @AllArgsConstructor
-    @Data
-    public static class Request {
-        private AnswerType answerType;
-        private String prompt;
-    }
-
-    public Request getRequest(GptSession session, String msg) {
-        if (session.getStrict()) {
-            String ownerLoc = "@" + ownerName;
-            log.info("ownerLoc: " + ownerLoc);
-            if (!msg.contains(ownerLoc) && !msg.startsWith("\\gpt ")) {
-                return null;
-            } else {
-                msg = msg.replaceFirst(ownerLoc, "");
-            }
-        }
-        if (msg.contains("#image") || CommonUtil.isSimilar(msg, "画个", 0.33)) {
-            return new Request(AnswerType.IMAGE, msg.replaceFirst("#image", "").trim());
-        }
-        return new Request(AnswerType.TEXT, msg);
     }
 
     @NotNull
@@ -140,12 +112,22 @@ public class GptListener implements Listener {
             return;
         }
 
-        Optional<Request> optionalRequest = Optional.ofNullable(getRequest(gptSession, content));
+        Optional<Request> optionalRequest = Optional.ofNullable(Request.build(gptSession, ownerName, content));
         optionalRequest.ifPresent(request -> {
             String prompt = request.getPrompt();
-            if (request.getAnswerType() == AnswerType.TEXT) {
-                String text = GptService.INSTANCE.textDialog(gptSession, prompt);
-                sendLongMessage(senderUserName, text);
+            if (request.getAnswerType() == Request.AnswerType.TEXT) {
+                Object result = GptService.INSTANCE.multiDialog(gptSession, prompt);
+                if (result instanceof String) {
+                    sendLongMessage(senderUserName, String.valueOf(result));
+                } else if (result instanceof File) {
+                    sender.sendImage(senderUserName, (File) result);
+                } else {
+                    try {
+                        sendLongMessage(senderUserName, String.valueOf(result));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
             } else {
                 File image = GptService.INSTANCE.imageDialog(gptSession, prompt);
                 sender.sendImage(senderUserName, image);

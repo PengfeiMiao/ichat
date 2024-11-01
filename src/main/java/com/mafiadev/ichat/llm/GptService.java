@@ -5,6 +5,7 @@ import com.mafiadev.ichat.constant.GlobalThreadPool;
 import com.mafiadev.ichat.llm.admin.AdminService;
 import com.mafiadev.ichat.llm.agent.Assistant;
 import com.mafiadev.ichat.llm.agent.Router;
+import com.mafiadev.ichat.model.type.RouterType;
 import com.mafiadev.ichat.llm.tool.WebPageTool;
 import com.mafiadev.ichat.model.GptSession;
 import com.mafiadev.ichat.service.MessageService;
@@ -60,10 +61,10 @@ public class GptService {
     public GptSession initSession(String userName, String msg) {
         GptSession session = sessionService.getSession(userName);
         String[] groupUser = CommonUtil.decode(userName).split("&&");
-        boolean inGroup = !groupUser[0].equals(groupUser[1]);
+        boolean inGroup = groupUser.length > 1 && !groupUser[0].equals(groupUser[1]);
         String groupName = CommonUtil.encode(groupUser[0]);
         if (msg.startsWith("\\gpt")) {
-            boolean multiple = CommonUtil.isMatch(msg, "^\\\\gpt .*-g") && inGroup;
+            boolean multiple = inGroup && CommonUtil.isMatch(msg, "^\\\\gpt .*-g");
             msg = msg.replace("\\gpt", "").trim();
             if (msg.startsWith("start")) {
                 boolean strict = CommonUtil.isMatch(msg, "^start .*-s");
@@ -94,12 +95,20 @@ public class GptService {
         return session;
     }
 
-    public String textDialog(GptSession session, String userMsg) {
-        String result = "";
-        ChatLanguageModel chatModel = session.getChatModel();
-        if(toolRouter(session, userMsg)) {
-            chatModel = session.getToolModel();
+    public Object multiDialog(GptSession session, String userMsg) {
+        switch (router(session, userMsg)) {
+            case TIME:
+                return textDialog(session, userMsg, true);
+            case IMAGE:
+                return imageDialog(session, userMsg);
+            default:
+                return textDialog(session, userMsg, false);
         }
+    }
+
+    public String textDialog(GptSession session, String userMsg, boolean useTool) {
+        String result = "";
+        ChatLanguageModel chatModel = useTool ? session.getToolModel() : session.getChatModel();
         String userName = session.getUserName();
         Assistant assistant = AiServices.builder(Assistant.class)
                 .chatLanguageModel(chatModel)
@@ -107,8 +116,6 @@ public class GptService {
                 .chatMemoryProvider(memoryId -> messageService.buildChatMemory(userName))
                 .build();
         List<String> failureWords = Arrays.asList("抱歉", "由于网络问题", "请稍后再尝试");
-//        chatMemoryStore.getMessages(userName).forEach(item ->
-//                System.out.println(item.toString().replace("\n", "\\n")));
         try {
             result = assistant.chat(session.getShortName(), userMsg);
         } catch (Exception e) {
@@ -123,7 +130,6 @@ public class GptService {
             } catch (Exception e1) {
                 return String.join(", ", failureWords);
             }
-//            result += "\n Details => e: " + e.getMessage();
         }
         filterNoise(session, failureWords);
         return result;
@@ -163,16 +169,10 @@ public class GptService {
         return FileUtil.pngConverter(response);
     }
 
-    public boolean toolRouter(GptSession session, String userMsg) {
+    public RouterType router(GptSession session, String userMsg) {
         ChatLanguageModel chatModel = session.getChatModel();
         Router router = AiServices.builder(Router.class).chatLanguageModel(chatModel).build();
-        return router.routeTool(session.getShortName(), userMsg);
-    }
-
-    public boolean imageRouter(GptSession session, String userMsg) {
-        ChatLanguageModel chatModel = session.getChatModel();
-        Router router = AiServices.builder(Router.class).chatLanguageModel(chatModel).build();
-        return router.routeDraw(session.getShortName(), userMsg);
+        return router.route(session.getShortName(), userMsg);
     }
 
     public GptSession login(String userName, boolean strict, boolean multiple) {
@@ -223,9 +223,9 @@ public class GptService {
                 continue;
             }
             if (gptSession.getLogin()) {
-                log.info("AI Answer: " + gptService.textDialog(gptSession, question));
+//                System.out.println(gptService.router(gptSession, question));
+                System.out.println(gptService.multiDialog(gptSession, question));
             }
-//            log.info("AI Answer: " + gptService.imageDialog(gptSession, question));
             System.out.println();
         }
     }
