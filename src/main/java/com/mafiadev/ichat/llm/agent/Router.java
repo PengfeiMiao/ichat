@@ -1,6 +1,6 @@
 package com.mafiadev.ichat.llm.agent;
 
-import com.mafiadev.ichat.model.type.RouterType;
+import com.mafiadev.ichat.model.struct.RouterType;
 import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.UserName;
 import dev.langchain4j.service.V;

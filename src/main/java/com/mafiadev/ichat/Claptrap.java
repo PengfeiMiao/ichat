@@ -2,6 +2,7 @@ package com.mafiadev.ichat;
 
 import com.mafiadev.ichat.constant.Constant;
 import com.mafiadev.ichat.llm.GptListener;
+import com.mafiadev.ichat.task.ScheduledTask;
 import com.mafiadev.ichat.task.TaskTrigger;
 import com.mafiadev.ichat.util.FileUtil;
 import com.meteor.wechatbc.impl.plugin.BasePlugin;
@@ -18,5 +19,6 @@ public class Claptrap extends BasePlugin {
         new TaskTrigger();
         this.saveDefaultConfig();
         new GptListener(this).register();
+        new ScheduledTask(this);
     }
 }

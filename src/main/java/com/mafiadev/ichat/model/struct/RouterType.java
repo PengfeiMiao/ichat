@@ -1,4 +1,4 @@
-package com.mafiadev.ichat.model.type;
+package com.mafiadev.ichat.model.struct;
 
 import dev.langchain4j.model.output.structured.Description;
 

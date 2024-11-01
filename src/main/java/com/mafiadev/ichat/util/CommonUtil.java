@@ -1,11 +1,15 @@
 package com.mafiadev.ichat.util;
 
 import org.apache.commons.text.similarity.JaroWinklerDistance;
+import org.quartz.CronExpression;
 
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
 import java.util.Base64;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -115,5 +119,22 @@ public class CommonUtil {
         Pattern r2 = Pattern.compile(regex);
         Matcher m2 = r2.matcher(str);
         return m2.find();
+    }
+
+    public static int isCronMatch(String cronExpression, Date time) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date());
+        calendar.add(Calendar.MINUTE, -1);
+        try {
+            CronExpression cron = new CronExpression(cronExpression);
+            Date nextFireTime = cron.getNextValidTimeAfter(calendar.getTime());
+            if (nextFireTime == null) {
+                return -1;
+            }
+            return Math.abs(time.getTime() - nextFireTime.getTime()) <= 60 * 1000L ? 1 : 0;
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return -1;
+        }
     }
 }

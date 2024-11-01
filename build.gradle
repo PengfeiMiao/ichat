@@ -28,6 +28,7 @@ dependencies {
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.2.Final'
     implementation 'org.hibernate:hibernate-core:5.6.15.Final'
     implementation 'com.github.gwenn:sqlite-dialect:0.1.0'
+    implementation 'org.quartz-scheduler:quartz:2.3.2'
 
     compileOnly 'org.projectlombok:lombok:1.18.34'
     annotationProcessor 'org.projectlombok:lombok:1.18.34'

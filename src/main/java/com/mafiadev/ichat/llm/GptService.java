@@ -5,11 +5,14 @@ import com.mafiadev.ichat.constant.GlobalThreadPool;
 import com.mafiadev.ichat.llm.admin.AdminService;
 import com.mafiadev.ichat.llm.agent.Assistant;
 import com.mafiadev.ichat.llm.agent.Router;
-import com.mafiadev.ichat.model.type.RouterType;
+import com.mafiadev.ichat.llm.agent.TaskHost;
 import com.mafiadev.ichat.llm.tool.WebPageTool;
 import com.mafiadev.ichat.model.GptSession;
+import com.mafiadev.ichat.model.struct.RouterType;
+import com.mafiadev.ichat.model.struct.Task;
 import com.mafiadev.ichat.service.MessageService;
 import com.mafiadev.ichat.service.SessionService;
+import com.mafiadev.ichat.service.TaskService;
 import com.mafiadev.ichat.util.CommonUtil;
 import com.mafiadev.ichat.util.ConfigUtil;
 import com.mafiadev.ichat.util.FileUtil;
@@ -27,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.File;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
@@ -50,12 +54,14 @@ public class GptService {
 
     private final SessionService sessionService = new SessionService();
     private final MessageService messageService = new MessageService();
+    private final TaskService taskService = new TaskService();
 
     private GptService(Claptrap plugin) {
         this.BASE_URL = plugin.getConfig().getString("baseUrl");
         this.KEYS = ConfigUtil.getConfigArr("keys");
         this.MODELS = ConfigUtil.getConfigArr("models");
         sessionService.loadSessions();
+        // todo: load task
     }
 
     public GptSession initSession(String userName, String msg) {
@@ -68,7 +74,7 @@ public class GptService {
             msg = msg.replace("\\gpt", "").trim();
             if (msg.startsWith("start")) {
                 boolean strict = CommonUtil.isMatch(msg, "^start .*-s");
-                if (multiple) {
+                if (multiple && session != null) {
                     session.reset(null);
                     sessionService.updateSession(session);
                 }
@@ -95,10 +101,18 @@ public class GptService {
         return session;
     }
 
+    public RouterType router(GptSession session, String userMsg) {
+        ChatLanguageModel chatModel = session.getChatModel();
+        Router router = AiServices.builder(Router.class).chatLanguageModel(chatModel).build();
+        return router.route(session.getShortName(), userMsg);
+    }
+
     public Object multiDialog(GptSession session, String userMsg) {
         switch (router(session, userMsg)) {
             case TIME:
                 return textDialog(session, userMsg, true);
+            case TASK:
+                return taskDialog(session, userMsg);
             case IMAGE:
                 return imageDialog(session, userMsg);
             default:
@@ -135,6 +149,21 @@ public class GptService {
         return result;
     }
 
+    public String taskDialog(GptSession session, String userMsg) {
+        ChatLanguageModel chatModel = session.getChatModel();
+        TaskHost host = AiServices.builder(TaskHost.class).chatLanguageModel(chatModel).build();
+        Task task = host.schedule(session.getShortName(), userMsg + "\n当前时间: " + new Date());
+        taskService.saveTask(session.getUserName(), task);
+        return task.getCreatedTips();
+    }
+
+    public File imageDialog(GptSession session, String userMsg) {
+        FileUtil.pngCleaner(FILE_PATH);
+        ImageModel client = session.getImageModel();
+        URI response = client.generate(userMsg).content().url();
+        return FileUtil.pngConverter(response);
+    }
+
     private void filterNoise(GptSession session, List<String> keywords) {
         GlobalThreadPool.CACHED_EXECUTOR.submit(() -> {
             List<ChatMessage> chatMessages = messageService.getMessages(session.getUserName());
@@ -160,19 +189,6 @@ public class GptService {
             }
             chatMessages.removeAll(toDeletedMessages);
         });
-    }
-
-    public File imageDialog(GptSession session, String userMsg) {
-        FileUtil.pngCleaner(FILE_PATH);
-        ImageModel client = session.getImageModel();
-        URI response = client.generate(userMsg).content().url();
-        return FileUtil.pngConverter(response);
-    }
-
-    public RouterType router(GptSession session, String userMsg) {
-        ChatLanguageModel chatModel = session.getChatModel();
-        Router router = AiServices.builder(Router.class).chatLanguageModel(chatModel).build();
-        return router.route(session.getShortName(), userMsg);
     }
 
     public GptSession login(String userName, boolean strict, boolean multiple) {
