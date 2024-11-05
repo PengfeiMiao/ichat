@@ -14,6 +14,10 @@ public class TaskService {
         return taskHashMap;
     }
 
+    public  List<Task> findTasks(String sessionId) {
+        return taskHashMap.getOrDefault(sessionId, new ArrayList<>());
+    }
+
     public void updateTasks(String sessionId, List<Task> tasks) {
         taskHashMap.put(sessionId, tasks);
     }

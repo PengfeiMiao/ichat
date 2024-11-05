@@ -6,7 +6,9 @@ import lombok.Data;
 @AllArgsConstructor
 @Data
 public class Task {
-    String cronExpression;
+    String cronExpr;
+    String type;
+    String content;
     String createdTips;
     String triggerTips;
 }

@@ -131,7 +131,7 @@ public class CommonUtil {
             if (nextFireTime == null) {
                 return -1;
             }
-            return Math.abs(time.getTime() - nextFireTime.getTime()) <= 60 * 1000L ? 1 : 0;
+            return Math.abs(time.getTime() - nextFireTime.getTime()) < 60 * 1000L ? 1 : 0;
         } catch (ParseException e) {
             e.printStackTrace();
             return -1;

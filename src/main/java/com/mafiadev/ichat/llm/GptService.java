@@ -1,5 +1,6 @@
 package com.mafiadev.ichat.llm;
 
+import com.alibaba.fastjson.JSON;
 import com.mafiadev.ichat.Claptrap;
 import com.mafiadev.ichat.constant.GlobalThreadPool;
 import com.mafiadev.ichat.llm.admin.AdminService;
@@ -108,13 +109,19 @@ public class GptService {
     }
 
     public Object multiDialog(GptSession session, String userMsg) {
-        switch (router(session, userMsg)) {
+        RouterType router = router(session, userMsg);
+        System.out.println(router.name());
+        switch (router) {
             case TIME:
                 return textDialog(session, userMsg, true);
-            case TASK:
-                return taskDialog(session, userMsg);
             case IMAGE:
                 return imageDialog(session, userMsg);
+            case TASK_ADD:
+                return taskDialog(session, userMsg, RouterType.TASK_ADD);
+            case TASK_DEL:
+                return taskDialog(session, userMsg, RouterType.TASK_DEL);
+            case TASK_LS:
+                return taskDialog(session, userMsg, RouterType.TASK_LS);
             default:
                 return textDialog(session, userMsg, false);
         }
@@ -149,12 +156,28 @@ public class GptService {
         return result;
     }
 
-    public String taskDialog(GptSession session, String userMsg) {
+    public String taskDialog(GptSession session, String userMsg, RouterType type) {
         ChatLanguageModel chatModel = session.getChatModel();
         TaskHost host = AiServices.builder(TaskHost.class).chatLanguageModel(chatModel).build();
-        Task task = host.schedule(session.getShortName(), userMsg + "\n当前时间: " + new Date());
-        taskService.saveTask(session.getUserName(), task);
-        return task.getCreatedTips();
+        String shortName = session.getShortName();
+        switch (type) {
+            case TASK_LS:
+                return host.list(shortName, taskService.findTasks(session.getUserName()));
+            case TASK_DEL:
+                List<Task> tasks = taskService.findTasks(session.getUserName());
+                Task task = host.schedule(shortName, userMsg + " \n当前时间: " + new Date());
+                if (!task.getCronExpr().isEmpty() && !task.getContent().isEmpty()) {
+                    tasks.removeIf(it ->
+                            it.getCronExpr().equals(task.getCronExpr()) || it.getContent().equals(task.getContent()));
+                    taskService.updateTasks(shortName, tasks);
+                }
+                return task.getCreatedTips();
+            default:
+                task = host.schedule(shortName, userMsg + " \n当前时间: " + new Date());
+                taskService.saveTask(session.getUserName(), task);
+                System.out.println(JSON.toJSONString(task));
+                return task.getCreatedTips();
+        }
     }
 
     public File imageDialog(GptSession session, String userMsg) {
@@ -240,6 +263,7 @@ public class GptService {
             }
             if (gptSession.getLogin()) {
 //                System.out.println(gptService.router(gptSession, question));
+//                System.out.println(gptService.taskDialog(gptSession, question, RouterType.TASK_ADD));
                 System.out.println(gptService.multiDialog(gptSession, question));
             }
             System.out.println();

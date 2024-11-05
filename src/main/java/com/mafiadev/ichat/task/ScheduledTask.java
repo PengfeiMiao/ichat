@@ -1,5 +1,6 @@
 package com.mafiadev.ichat.task;
 
+import com.alibaba.fastjson.JSON;
 import com.mafiadev.ichat.Claptrap;
 import com.mafiadev.ichat.model.struct.Task;
 import com.mafiadev.ichat.service.TaskService;
@@ -36,9 +37,13 @@ public class ScheduledTask {
                 Iterator<Task> iterator = userTasks.iterator();
                 while (iterator.hasNext()) {
                     Task it = iterator.next();
-                    int cronMatch = CommonUtil.isCronMatch(it.getCronExpression(), new Date());
+                    int cronMatch = CommonUtil.isCronMatch(it.getCronExpr(), new Date());
+                    System.out.println(cronMatch + " => " + JSON.toJSONString(it));
                     if (cronMatch > 0) {
                         sender.sendMessage(fromUserName, it.getTriggerTips());
+                        if ("ONCE".equals(it.getType())) {
+                            iterator.remove();
+                        }
                     } else if (cronMatch < 0) {
                         iterator.remove();
                     }
