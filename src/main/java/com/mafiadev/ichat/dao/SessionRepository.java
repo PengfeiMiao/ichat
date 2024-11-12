@@ -8,6 +8,7 @@ import com.mafiadev.ichat.entity.mapper.ModelEntityMapper;
 import com.mafiadev.ichat.model.GptSession;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SessionRepository {
     public boolean saveSession(GptSession session) {
@@ -36,6 +37,8 @@ public class SessionRepository {
                 ConditionBuilder.of(
                         new Condition("LOGIN", true)
                 ));
-        return ModelEntityMapper.MAPPER.convertSessionEntitiesToModels(sessionEntities);
+        return ModelEntityMapper.MAPPER.convertSessionEntitiesToModels(sessionEntities).stream()
+                .filter(it -> it.getChatModel() != null && it.getToolModel() != null && it.getImageModel() != null)
+                .collect(Collectors.toList());
     }
 }

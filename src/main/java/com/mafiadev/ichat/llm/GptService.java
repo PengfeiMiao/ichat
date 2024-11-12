@@ -9,6 +9,8 @@ import com.mafiadev.ichat.llm.agent.Router;
 import com.mafiadev.ichat.llm.agent.TaskHost;
 import com.mafiadev.ichat.llm.tool.WebPageTool;
 import com.mafiadev.ichat.model.GptSession;
+import com.mafiadev.ichat.model.ModelConfig;
+import com.mafiadev.ichat.model.ModelFactory;
 import com.mafiadev.ichat.model.struct.RouterType;
 import com.mafiadev.ichat.model.struct.Task;
 import com.mafiadev.ichat.service.MessageService;
@@ -23,6 +25,7 @@ import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.image.ImageModel;
+import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiImageModel;
 import dev.langchain4j.service.AiServices;
@@ -49,20 +52,16 @@ public class GptService {
         INSTANCE = new GptService(plugin);
     }
 
-    private final String BASE_URL;
-    private final List<String> KEYS;
-    private final List<String> MODELS;
+    private final ModelConfig TOOL_CONFIG;
+    private final ModelConfig CHAT_CONFIG;
 
     private final SessionService sessionService = new SessionService();
     private final MessageService messageService = new MessageService();
     private final TaskService taskService = new TaskService();
 
     private GptService(Claptrap plugin) {
-        this.BASE_URL = plugin.getConfig().getString("baseUrl");
-        this.KEYS = ConfigUtil.getConfigArr("keys");
-        this.MODELS = ConfigUtil.getConfigArr("models");
-        sessionService.loadSessions();
-        // todo: load task
+        this.TOOL_CONFIG = ModelFactory.buildModelConfig(ConfigUtil.getConfig("toolModel"));
+        this.CHAT_CONFIG = ModelFactory.buildModelConfig(ConfigUtil.getConfig("chatModel"));
     }
 
     public GptSession initSession(String userName, String msg) {
@@ -215,33 +214,20 @@ public class GptService {
     }
 
     public GptSession login(String userName, boolean strict, boolean multiple) {
-        ChatLanguageModel chatModel = OpenAiChatModel.builder()
-                .baseUrl(BASE_URL)
-                .apiKey(KEYS.get(0))
-                .modelName(MODELS.get(0))
-                .build();
-        ChatLanguageModel gpt4Model = OpenAiChatModel.builder()
-                .baseUrl(BASE_URL)
-                .apiKey(KEYS.get(1))
-                .modelName(MODELS.get(1))
-                .build();
-        ImageModel imageModel = OpenAiImageModel.builder()
-                .baseUrl(BASE_URL)
-                .apiKey(KEYS.get(1))
-                .modelName("dall-e-2")
-                .responseFormat("b64_json")
-                .withPersisting()
-                .persistTo(FILE_PATH)
-                .build();
+        ChatLanguageModel chatModel = ModelFactory.buildChatModel(CHAT_CONFIG);
+        ChatLanguageModel gpt4Model = ModelFactory.buildChatModel(TOOL_CONFIG);
+
+        ModelConfig imageConfig = ModelFactory.buildModelConfig("gpt-4o-mini");
+        imageConfig.setName("dall-e-2");
+        ImageModel imageModel = ModelFactory.buildImageModel(imageConfig);
         GptSession session = new GptSession(userName, true, chatModel, gpt4Model, imageModel, null, strict, multiple);
         sessionService.saveSession(session);
         return session;
     }
 
     public GptService() {
-        this.BASE_URL = ConfigUtil.getConfig("baseUrl");
-        this.KEYS = ConfigUtil.getConfigArr("keys");
-        this.MODELS = ConfigUtil.getConfigArr("models");
+        this.TOOL_CONFIG = ModelFactory.buildModelConfig(ConfigUtil.getConfig("toolModel"));
+        this.CHAT_CONFIG = ModelFactory.buildModelConfig(ConfigUtil.getConfig("chatModel"));
         sessionService.loadSessions();
     }
 
@@ -261,7 +247,7 @@ public class GptService {
                 System.out.println();
                 continue;
             }
-            if (gptSession.getLogin()) {
+            if (gptSession != null && gptSession.getLogin()) {
 //                System.out.println(gptService.router(gptSession, question));
 //                System.out.println(gptService.taskDialog(gptSession, question, RouterType.TASK_ADD));
                 System.out.println(gptService.multiDialog(gptSession, question));

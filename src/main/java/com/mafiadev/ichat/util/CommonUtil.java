@@ -3,6 +3,7 @@ package com.mafiadev.ichat.util;
 import org.apache.commons.text.similarity.JaroWinklerDistance;
 import org.quartz.CronExpression;
 
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -135,6 +136,21 @@ public class CommonUtil {
         } catch (ParseException e) {
             e.printStackTrace();
             return -1;
+        }
+    }
+
+    public static <T> T getFieldValue(Object object, String fieldName, Class<T> tClass) {
+        Class<?> myClass = object.getClass();
+        Field privateField;
+        try {
+            privateField = myClass.getDeclaredField(fieldName);
+            privateField.setAccessible(true);
+            Object fieldValue = privateField.get(object);
+            privateField.setAccessible(false);
+            return (T) fieldValue;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 }

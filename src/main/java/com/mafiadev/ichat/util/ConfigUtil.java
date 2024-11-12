@@ -1,42 +1,24 @@
 package com.mafiadev.ichat.util;
 
-import com.mafiadev.ichat.constant.Constant;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
+import org.jetbrains.annotations.NotNull;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class ConfigUtil {
-    private static final Map<String, List<String>> configMap = new HashMap<>();
+    private static JSONObject configJson = new JSONObject();
 
     static {
-//        updateDbUrl();
         loadConfig();
-    }
-
-    private static void updateDbUrl() {
-        Properties prop = new Properties();
-        ClassLoader classLoader = ConfigUtil.class.getClassLoader();
-        String config = "hibernate.cfg.xml";
-        Path resourcePath = Paths.get(Objects.requireNonNull(classLoader.getResource(config)).getPath());
-        try(InputStream input = Files.newInputStream(resourcePath) ;
-            OutputStream output = Files.newOutputStream(resourcePath)) {
-            prop.load(input);
-            prop.setProperty("hibernate.connection.url", "jdbc:sqlite:" + Constant.DB_PATH);
-            prop.store(output, null);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     private static void loadConfig() {
@@ -45,30 +27,48 @@ public class ConfigUtil {
 
         try (InputStream in = ConfigUtil.class.getClassLoader().getResourceAsStream(yamlFilePath)) {
             Map<String, Object> config = yaml.load(in);
-            for(String key : config.keySet()) {
-                Object value = config.get(key);
-                List<String> result = new ArrayList<>();
-                if (value instanceof ArrayList<?>) {
-                    for (Object o : (List<?>) value) {
-                        result.add(String.valueOf(o));
-                    }
-                } else {
-                    result.add(String.valueOf(value));
-                }
-                configMap.put(key, result);
-            }
+            configJson = JSON.parseObject(JSON.toJSONString(config));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public static List<String> getConfigArr(String key) {
-        return configMap.get(key);
+    public static <T> List<T> getConfigArr(@NotNull String key, Class<T> clazz) {
+        String[] path = key.split("\\.");
+        int index = 0;
+        JSONObject curJson = configJson;
+        while (index < path.length - 1) {
+            curJson = (JSONObject) curJson.get(path[index]);
+            if (curJson == null) {
+                return null;
+            }
+            index++;
+        }
+        String leaf = path[path.length - 1];
+        if (curJson.get(leaf) instanceof JSONObject || curJson.get(leaf) instanceof JSONArray) {
+            return curJson.getList(leaf, clazz);
+        }
+        Object res = curJson.get(leaf);
+        if (res == null) {
+            return null;
+        }
+        try {
+            return Collections.singletonList((T) res);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
-    public static String getConfig(String key) {
+    public static List<String> getConfigArr(@NotNull String key) {
+        return Optional.ofNullable(getConfigArr(key, Object.class)).orElse(new ArrayList<>()).stream()
+                .map(String::valueOf)
+                .collect(Collectors.toList());
+    }
+
+    public static String getConfig(@NotNull String key) {
         List<String> list = getConfigArr(key);
-        if(list == null || list.size() == 0) {
+        if (list == null || list.size() == 0) {
             return "";
         }
         return list.get(0);

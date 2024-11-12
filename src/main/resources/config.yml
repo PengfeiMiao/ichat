@@ -1,10 +1,18 @@
-baseUrl: "https://oneapi.xty.app/v1/"
-keys:
-  - ""
-  - ""
 models:
-  - "gpt-3.5-turbo"
-  - "gpt-4o-mini"
+  - name: "gpt-3.5-turbo"
+    type: "openai"
+    baseUrl: "https://oneapi.xty.app/v1/"
+    apiKey: ""
+  - name: "gpt-4o-mini"
+    type: "openai"
+    baseUrl: "https://oneapi.xty.app/v1/"
+    apiKey: ""
+  - name: "qwen2.5:7b"
+    type: "ollama"
+    baseUrl: ""
+    apiKey: ""
+toolModel: "qwen2.5:7b"
+chatModel: "qwen2.5:7b"
 adminPwd: "123456"
 ipSwitch: false
 ipUrls:

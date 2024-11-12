@@ -14,8 +14,9 @@ repositories {
 apply from: "${rootProject.projectDir}/gradle/git-hooks.gradle"
 
 dependencies {
-    implementation 'dev.langchain4j:langchain4j-open-ai:0.34.0'
-    implementation 'dev.langchain4j:langchain4j:0.34.0'
+    implementation 'dev.langchain4j:langchain4j-open-ai:0.35.0'
+    implementation 'dev.langchain4j:langchain4j-ollama:0.35.0'
+    implementation 'dev.langchain4j:langchain4j:0.35.0'
 //	implementation 'dev.langchain4j:langchain4j-easy-rag'
     implementation files('./libs/wechat-bc-1.1.9-SNAPSHOT.jar')
 
@@ -29,6 +30,7 @@ dependencies {
     implementation 'org.hibernate:hibernate-core:5.6.15.Final'
     implementation 'com.github.gwenn:sqlite-dialect:0.1.0'
     implementation 'org.quartz-scheduler:quartz:2.3.2'
+    implementation 'org.jsoup:jsoup:1.18.1'
 
     compileOnly 'org.projectlombok:lombok:1.18.34'
     annotationProcessor 'org.projectlombok:lombok:1.18.34'
