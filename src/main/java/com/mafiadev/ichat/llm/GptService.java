@@ -25,9 +25,6 @@ import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.image.ImageModel;
-import dev.langchain4j.model.ollama.OllamaChatModel;
-import dev.langchain4j.model.openai.OpenAiChatModel;
-import dev.langchain4j.model.openai.OpenAiImageModel;
 import dev.langchain4j.service.AiServices;
 import lombok.extern.slf4j.Slf4j;
 
@@ -164,7 +161,7 @@ public class GptService {
                 return host.list(shortName, taskService.findTasks(session.getUserName()));
             case TASK_DEL:
                 List<Task> tasks = taskService.findTasks(session.getUserName());
-                Task task = host.schedule(shortName, userMsg + " \n当前时间: " + new Date());
+                Task task = host.delete(shortName, tasks, userMsg + " \n当前时间: " + new Date());
                 if (!task.getCronExpr().isEmpty() && !task.getContent().isEmpty()) {
                     tasks.removeIf(it ->
                             it.getCronExpr().equals(task.getCronExpr()) || it.getContent().equals(task.getContent()));
@@ -173,9 +170,12 @@ public class GptService {
                 return task.getCreatedTips();
             default:
                 task = host.schedule(shortName, userMsg + " \n当前时间: " + new Date());
-                taskService.saveTask(session.getUserName(), task);
-                System.out.println(JSON.toJSONString(task));
-                return task.getCreatedTips();
+                if (task != null && task.getCronExpr() != null && !task.getCronExpr().isEmpty()) {
+                    taskService.saveTask(session.getUserName(), task);
+                    System.out.println(JSON.toJSONString(task));
+                    return task.getCreatedTips();
+                }
+                return "创建失败";
         }
     }
 
