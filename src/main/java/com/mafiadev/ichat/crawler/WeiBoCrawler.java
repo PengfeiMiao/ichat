@@ -1,7 +1,7 @@
 package com.mafiadev.ichat.crawler;
 
 import cn.hutool.http.HttpUtil;
-import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson.JSONObject;
 import com.mafiadev.ichat.util.CrawlerUtil;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;

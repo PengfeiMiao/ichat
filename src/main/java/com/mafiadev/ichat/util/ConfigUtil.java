@@ -1,8 +1,8 @@
 package com.mafiadev.ichat.util;
 
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONArray;
-import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import org.jetbrains.annotations.NotNull;
 import org.yaml.snakeyaml.Yaml;
 
@@ -46,7 +46,8 @@ public class ConfigUtil {
         }
         String leaf = path[path.length - 1];
         if (curJson.get(leaf) instanceof JSONObject || curJson.get(leaf) instanceof JSONArray) {
-            return curJson.getList(leaf, clazz);
+            JSONArray jsonArray = curJson.getJSONArray(leaf);
+            return jsonArray.toJavaList(clazz);
         }
         Object res = curJson.get(leaf);
         if (res == null) {
