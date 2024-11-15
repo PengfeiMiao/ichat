@@ -57,6 +57,9 @@ public class ModelFactory {
     }
 
     public static String buildModelName(Object model) {
+        if (model == null) {
+            return null;
+        }
         return CommonUtil.getFieldValue(model, "modelName", String.class);
     }
 }

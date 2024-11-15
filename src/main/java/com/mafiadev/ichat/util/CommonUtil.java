@@ -1,6 +1,7 @@
 package com.mafiadev.ichat.util;
 
 import org.apache.commons.text.similarity.JaroWinklerDistance;
+import org.jetbrains.annotations.NotNull;
 import org.quartz.CronExpression;
 
 import java.lang.reflect.Field;
@@ -139,7 +140,7 @@ public class CommonUtil {
         }
     }
 
-    public static <T> T getFieldValue(Object object, String fieldName, Class<T> tClass) {
+    public static <T> T getFieldValue(@NotNull Object object, String fieldName, Class<T> targetClz) {
         Class<?> myClass = object.getClass();
         Field privateField;
         try {
