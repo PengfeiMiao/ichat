@@ -1,8 +1,9 @@
 package com.mafiadev.ichat.util;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import org.jetbrains.annotations.NotNull;
 import org.yaml.snakeyaml.Yaml;
 
@@ -15,7 +16,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class ConfigUtil {
-    private static JSONObject configJson = new JSONObject();
+    private static final Gson gson = new Gson();
+    private static JsonObject configJson = new JsonObject();
 
     static {
         loadConfig();
@@ -27,34 +29,39 @@ public class ConfigUtil {
 
         try (InputStream in = ConfigUtil.class.getClassLoader().getResourceAsStream(yamlFilePath)) {
             Map<String, Object> config = yaml.load(in);
-            configJson = JSON.parseObject(JSON.toJSONString(config));
+            String json = gson.toJson(config);
+            configJson = gson.fromJson(json, JsonObject.class);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     public static <T> List<T> getConfigArr(@NotNull String key, Class<T> clazz) {
-        String[] path = key.split("\\.");
-        int index = 0;
-        JSONObject curJson = configJson;
-        while (index < path.length - 1) {
-            curJson = (JSONObject) curJson.get(path[index]);
-            if (curJson == null) {
+        try {
+            String[] path = key.split("\\.");
+            int index = 0;
+            JsonObject curJson = configJson;
+            while (index < path.length - 1) {
+                curJson = curJson.getAsJsonObject(path[index]);
+                if (curJson == null) {
+                    return null;
+                }
+                index++;
+            }
+            String leaf = path[path.length - 1];
+            JsonElement leafElement = curJson.get(leaf);
+            if (leafElement == null) {
                 return null;
             }
-            index++;
-        }
-        String leaf = path[path.length - 1];
-        if (curJson.get(leaf) instanceof JSONObject || curJson.get(leaf) instanceof JSONArray) {
-            JSONArray jsonArray = curJson.getJSONArray(leaf);
-            return jsonArray.toJavaList(clazz);
-        }
-        Object res = curJson.get(leaf);
-        if (res == null) {
-            return null;
-        }
-        try {
-            return Collections.singletonList((T) res);
+            if (leafElement.isJsonArray()) {
+                JsonArray jsonArray = leafElement.getAsJsonArray();
+                return jsonArray
+                        .asList().stream()
+                        .map(element -> gson.fromJson(element, clazz))
+                        .collect(Collectors.toList());
+            } else {
+                return Collections.singletonList(gson.fromJson(leafElement, clazz));
+            }
         } catch (Exception e) {
             e.printStackTrace();
             return null;
