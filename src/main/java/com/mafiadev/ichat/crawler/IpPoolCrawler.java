@@ -1,9 +1,9 @@
 package com.mafiadev.ichat.crawler;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.TypeReference;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import com.mafiadev.ichat.util.ConfigUtil;
 import com.mafiadev.ichat.util.CrawlerUtil;
 import com.mafiadev.ichat.util.FileUtil;
@@ -29,6 +29,7 @@ public class IpPoolCrawler {
     private static final Path ipPoolPath = Paths.get(FILE_PATH.toString(), "ip_pool.json");
     private static final int timeout = 1000;
     private static final List<String> urls = ConfigUtil.getConfigArr("ipUrls");
+    private static final Gson gson = new Gson();
 
     private boolean checkHealth(IpPort ipPort) {
         try {
@@ -49,7 +50,7 @@ public class IpPoolCrawler {
                 .distinct()
                 .filter(this::checkHealth)
                 .collect(Collectors.toList());
-        FileUtil.writeJson(ipPoolPath, JSON.toJSONString(result));
+        FileUtil.writeJson(ipPoolPath, gson.toJson(result));
         return result;
     }
 
@@ -71,8 +72,7 @@ public class IpPoolCrawler {
     public List<IpPort> load() {
         try {
             String json = FileUtil.readJson(ipPoolPath);
-            return JSONObject.parseObject(json, new TypeReference<ArrayList<IpPort>>() {
-            });
+            return gson.fromJson(json, new TypeToken<List<IpPort>>() {}.getType());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -86,12 +86,11 @@ public class IpPoolCrawler {
                 Document doc = CrawlerUtil.getDocument(url);
                 String html = doc.select("body").html();
                 String substring = "{" + html.substring(html.indexOf("\"TOTAL\":"));
-                return JSONArray.parseArray(JSONObject.parseObject(substring).get("LISTA").toString()).stream()
-                        .map(it -> {
-                                    JSONObject jsonObj = JSONObject.parseObject(it.toString());
-                                    return new IpPort(jsonObj.getString("IP"), jsonObj.getInteger("PORT"));
-                                }
-                        ).collect(Collectors.toList());
+
+                JsonObject jsonObject = gson.fromJson(substring, JsonObject.class);
+                JsonArray lista = jsonObject.getAsJsonArray("LISTA");
+
+                return gson.fromJson(lista, new TypeToken<List<IpPort>>() {}.getType());
             } catch (Exception e) {
                 e.printStackTrace();
             }

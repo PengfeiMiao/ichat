@@ -1,6 +1,6 @@
 package com.mafiadev.ichat.llm;
 
-import com.alibaba.fastjson.JSON;
+import com.google.gson.Gson;
 import com.mafiadev.ichat.Claptrap;
 import com.mafiadev.ichat.constant.GlobalThreadPool;
 import com.mafiadev.ichat.llm.admin.AdminService;
@@ -161,19 +161,19 @@ public class GptService {
                 return host.list(shortName, taskService.findTasks(session.getUserName()));
             case TASK_DEL:
                 List<Task> tasks = taskService.findTasks(session.getUserName());
-                Task task = host.delete(shortName, tasks, userMsg + " \n当前时间: " + new Date());
-                if (!task.getCronExpr().isEmpty() && !task.getContent().isEmpty()) {
+                Task taskDel = host.delete(shortName, tasks, userMsg + " \n当前时间: " + new Date());
+                if (!taskDel.getCronExpr().isEmpty() && !taskDel.getContent().isEmpty()) {
                     tasks.removeIf(it ->
-                            it.getCronExpr().equals(task.getCronExpr()) || it.getContent().equals(task.getContent()));
+                            it.getCronExpr().equals(taskDel.getCronExpr()) || it.getContent().equals(taskDel.getContent()));
                     taskService.updateTasks(shortName, tasks);
                 }
-                return task.getCreatedTips();
+                return taskDel.getCreatedTips();
             default:
-                task = host.schedule(shortName, userMsg + " \n当前时间: " + new Date());
-                if (task != null && task.getCronExpr() != null && !task.getCronExpr().isEmpty()) {
-                    taskService.saveTask(session.getUserName(), task);
-                    System.out.println(JSON.toJSONString(task));
-                    return task.getCreatedTips();
+                Task taskAdd = host.schedule(shortName, userMsg + " \n当前时间: " + new Date());
+                if (taskAdd != null && taskAdd.getCronExpr() != null && !taskAdd.getCronExpr().isEmpty()) {
+                    taskService.saveTask(session.getUserName(), taskAdd);
+                    System.out.println(new Gson().toJson(taskAdd));
+                    return taskAdd.getCreatedTips();
                 }
                 return "创建失败";
         }

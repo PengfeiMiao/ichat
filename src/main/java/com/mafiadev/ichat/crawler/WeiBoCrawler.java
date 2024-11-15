@@ -1,7 +1,8 @@
 package com.mafiadev.ichat.crawler;
 
 import cn.hutool.http.HttpUtil;
-import com.alibaba.fastjson.JSONObject;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.mafiadev.ichat.util.CrawlerUtil;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
@@ -20,6 +21,8 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class WeiBoCrawler {
+    private static final Gson gson = new Gson();
+
     public static String crawlWeiboTops() {
         String html = "";
         try {
@@ -77,10 +80,10 @@ public class WeiBoCrawler {
         String sub = "";
         String subp = "";
         if (!resultStr.isEmpty()) {
-            JSONObject result = JSONObject.parseObject(resultStr);
-            if (result.getIntValue("retcode") == 20000000) {
-                sub = result.getJSONObject("data").getString("sub");
-                subp = result.getJSONObject("data").getString("subp");
+            JsonObject result = gson.fromJson(resultStr, JsonObject.class);
+            if (result.get("retcode").getAsInt() == 20000000) {
+                sub = result.getAsJsonObject("data").get("sub").getAsString();
+                subp = result.getAsJsonObject("data").get("subp").getAsString();
             }
         }
         return "SUB=" + sub + ";SUBP=" + subp + ";";
@@ -94,9 +97,9 @@ public class WeiBoCrawler {
         String quStr = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
         String tid = "";
         if (!quStr.isEmpty()) {
-            JSONObject result = JSONObject.parseObject(quStr);
-            if (result.getIntValue("retcode") == 20000000) {
-                tid = result.getJSONObject("data").getString("tid");
+            JsonObject result = gson.fromJson(quStr, JsonObject.class);
+            if (result.get("retcode").getAsInt() == 20000000) {
+                tid = result.getAsJsonObject("data").get("tid").getAsString();
             }
         }
         return tid;

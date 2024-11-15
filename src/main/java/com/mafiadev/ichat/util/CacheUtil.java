@@ -1,8 +1,7 @@
 package com.mafiadev.ichat.util;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.TypeReference;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,6 +12,7 @@ import static com.mafiadev.ichat.constant.Constant.SEARCH_FAILED;
 public class CacheUtil {
     private static final Map<String, String> cache = new ConcurrentHashMap<>();
     private static final long expires = 10 * 60 * 1000;
+    private static final Gson gson = new Gson();
 
     public static <T> T cacheFunc(String key, Function<Void, T> function) {
         long current = System.currentTimeMillis();
@@ -21,13 +21,12 @@ public class CacheUtil {
             int timeIdx = obj.indexOf("&");
             long last = Long.parseLong(obj.substring(0, timeIdx));
             if (current - last < expires) {
-                return JSONObject.parseObject(obj.substring(timeIdx, obj.length() - 1), new TypeReference<T>() {
-                });
+                return gson.fromJson(obj.substring(timeIdx + 1), new TypeToken<T>() {}.getType());
             }
         }
         T result = function.apply(null);
         if (result != null && !SEARCH_FAILED.equals(String.valueOf(result))) {
-            cache.put(key, current + "&" + JSON.toJSONString(result));
+            cache.put(key, current + "&" + gson.toJson(result));
         }
         return result;
     }
