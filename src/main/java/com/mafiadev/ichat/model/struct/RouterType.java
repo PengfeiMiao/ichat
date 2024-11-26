@@ -2,6 +2,9 @@ package com.mafiadev.ichat.model.struct;
 
 import dev.langchain4j.model.output.structured.Description;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 public enum RouterType {
     @Description("日期时间、实时信息、搜索引擎 或 新闻热搜")
     TIME,
@@ -19,5 +22,12 @@ public enum RouterType {
     TASK_LS,
 
     @Description("和以上类型都无关")
-    OTHER
+    OTHER;
+
+    public static String[] getAll() {
+        return Arrays.stream(RouterType.values())
+                .map(RouterType::name)
+                .collect(Collectors.toList())
+                .toArray(new String[] {});
+    }
 }

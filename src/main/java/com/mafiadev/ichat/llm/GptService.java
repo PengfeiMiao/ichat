@@ -101,7 +101,7 @@ public class GptService {
     public RouterType router(GptSession session, String userMsg) {
         ChatLanguageModel chatModel = session.getChatModel();
         Router router = AiServices.builder(Router.class).chatLanguageModel(chatModel).build();
-        return router.route(session.getShortName(), userMsg);
+        return router.route(session.getShortName(), userMsg, RouterType.getAll());
     }
 
     public Object multiDialog(GptSession session, String userMsg) {

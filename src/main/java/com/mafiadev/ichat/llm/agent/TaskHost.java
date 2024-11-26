@@ -18,7 +18,7 @@ public interface TaskHost {
             "=> 生成 content (任务内容, 任务目的); " +
             "=> 生成 createdTips (任务创建结果的提示语), " +
             "生成规则如下: " +
-            "IF cronExpr == null THEN 给出失败提示, " +
+            "IF cronExpr == null THEN 给出失败或缺少关键信息的提示, " +
             "IF cronExpr != null THEN 给出创建成功提示并包含任务触发时间, " +
             "=> 生成 triggerTips (任务触发成功的提示语, 结合 content 给出口语化提示, 注意不要用将来时态); " +
             "=> 最终生成 Task 对象")
