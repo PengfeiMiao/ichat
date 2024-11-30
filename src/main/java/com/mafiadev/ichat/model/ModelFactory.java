@@ -26,18 +26,22 @@ public class ModelFactory {
         if (modelConfig == null) {
             return null;
         }
-        if ("openai".equals(modelConfig.getType())) {
-            return OpenAiChatModel.builder()
-                    .modelName(modelConfig.getName())
-                    .baseUrl(modelConfig.getBaseUrl())
-                    .apiKey(modelConfig.getApiKey())
-                    .build();
-        }
-        if ("ollama".equals(modelConfig.getType())) {
-            return OllamaChatModel.builder()
-                    .modelName(modelConfig.getName())
-                    .baseUrl(modelConfig.getBaseUrl())
-                    .build();
+        try {
+            if ("openai".equals(modelConfig.getType())) {
+                return OpenAiChatModel.builder()
+                        .modelName(modelConfig.getName())
+                        .baseUrl(modelConfig.getBaseUrl())
+                        .apiKey(modelConfig.getApiKey())
+                        .build();
+            }
+            if ("ollama".equals(modelConfig.getType())) {
+                return OllamaChatModel.builder()
+                        .modelName(modelConfig.getName())
+                        .baseUrl(modelConfig.getBaseUrl())
+                        .build();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return null;
     }
@@ -46,14 +50,19 @@ public class ModelFactory {
         if (modelConfig == null) {
             return null;
         }
-        return OpenAiImageModel.builder()
-                .modelName(modelConfig.getName())
-                .baseUrl(modelConfig.getBaseUrl())
-                .apiKey(modelConfig.getApiKey())
-                .responseFormat("b64_json")
-                .withPersisting()
-                .persistTo(FILE_PATH)
-                .build();
+        try {
+            return OpenAiImageModel.builder()
+                    .modelName(modelConfig.getName())
+                    .baseUrl(modelConfig.getBaseUrl())
+                    .apiKey(modelConfig.getApiKey())
+                    .responseFormat("b64_json")
+                    .withPersisting()
+                    .persistTo(FILE_PATH)
+                    .build();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public static String buildModelName(Object model) {
