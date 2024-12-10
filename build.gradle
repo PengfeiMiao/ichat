@@ -38,13 +38,13 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
 }
 
+shadowJar {
+    mergeServiceFiles()
+}
+
 tasks.register('copyJarToPlugins', Copy) {
     from 'build/libs'
     into 'plugins'
     include '*-all.jar'
 }
-
-shadowJar.dependsOn copyJarToPlugins
-shadowJar {
-    mergeServiceFiles()
-}
+copyJarToPlugins.dependsOn shadowJar
