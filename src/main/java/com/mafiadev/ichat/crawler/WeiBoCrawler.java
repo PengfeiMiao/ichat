@@ -41,7 +41,6 @@ public class WeiBoCrawler {
 
                 if (response.isSuccessful() && responseBody != null) {
                     html = responseBody.string();
-//                    System.out.println(html);
                     Document document = Jsoup.parse(html);
                     Element item = document.getElementsByTag("tbody").first();
                     if (item != null) {
@@ -103,9 +102,5 @@ public class WeiBoCrawler {
             }
         }
         return tid;
-    }
-
-    public static void main(String[] args) {
-        System.out.println(crawlWeiboTops());
     }
 }

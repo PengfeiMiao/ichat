@@ -44,8 +44,8 @@ public class GptListener implements Listener {
      * 注册监听器
      */
     public void register() {
-        GptService.init(plugin);
-        AdminService.init(plugin);
+        GptService.init();
+        AdminService.init();
         plugin.getWeChatClient().getEventManager().registerPluginListener(plugin, this);
     }
 

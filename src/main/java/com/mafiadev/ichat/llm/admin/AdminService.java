@@ -1,7 +1,5 @@
 package com.mafiadev.ichat.llm.admin;
 
-import cn.hutool.core.collection.ConcurrentHashSet;
-import com.mafiadev.ichat.Claptrap;
 import com.mafiadev.ichat.model.GptSession;
 import com.mafiadev.ichat.service.MessageService;
 import com.mafiadev.ichat.service.SessionService;
@@ -17,26 +15,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
 
 public class AdminService {
     public static AdminService INSTANCE;
 
-    public static void init(Claptrap plugin) {
-        INSTANCE = new AdminService(plugin);
+    public static void init() {
+        INSTANCE = new AdminService();
     }
 
     private static final List<String> admins = new ArrayList<>();
-    private static final Set<String> sessionIds = new ConcurrentHashSet<>();
+    private static final Set<String> sessionIds = new ConcurrentSkipListSet<>();
     private final String password;
     private final SessionService sessionService;
     private final MessageService messageService;
-
-    public AdminService(Claptrap plugin) {
-        this.password = plugin.getConfig().getString("adminPwd");
-        this.sessionService = new SessionService();
-        this.messageService = new MessageService();
-    }
 
     public AdminService() {
         this.password = ConfigUtil.getConfig("adminPwd");

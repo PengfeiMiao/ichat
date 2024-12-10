@@ -161,7 +161,6 @@ public class IpPoolCrawler {
                 Document doc = CrawlerUtil.getDocument(url);
                 Elements links = doc.select("a");
                 System.out.println(doc.html());
-
                 System.out.println(links.html());
                 System.out.println(getIpPortsByTable(doc));
             } catch (Exception e) {
@@ -200,18 +199,5 @@ public class IpPoolCrawler {
             }
         }
         return ipPorts;
-    }
-
-    public static void main(String[] args) {
-        try {
-//            Jsoup.connect("https://www.baidu.com")
-//                    .userAgent(CrawlerUtil.getUserAgent())
-//                    .proxy(new IpPort("117.86.13.107", 8089).toProxy())
-//                    .timeout(timeout)
-//                    .get();
-            System.out.println(new IpPoolCrawler().getIpPool0());
-        } catch (Exception e) {
-           e.printStackTrace();
-        }
     }
 }

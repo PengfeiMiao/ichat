@@ -1,7 +1,5 @@
 package com.mafiadev.ichat.llm;
 
-import com.google.gson.Gson;
-import com.mafiadev.ichat.Claptrap;
 import com.mafiadev.ichat.constant.GlobalThreadPool;
 import com.mafiadev.ichat.llm.admin.AdminService;
 import com.mafiadev.ichat.llm.agent.Assistant;
@@ -45,8 +43,8 @@ import static com.mafiadev.ichat.constant.Constant.FILE_PATH;
 @Slf4j
 public class GptService {
     public static GptService INSTANCE;
-    public static void init(Claptrap plugin) {
-        INSTANCE = new GptService(plugin);
+    public static void init() {
+        INSTANCE = new GptService();
     }
 
     private final ModelConfig TOOL_CONFIG;
@@ -56,9 +54,10 @@ public class GptService {
     private final MessageService messageService = new MessageService();
     private final TaskService taskService = new TaskService();
 
-    private GptService(Claptrap plugin) {
+    private GptService() {
         this.TOOL_CONFIG = ModelFactory.buildModelConfig(ConfigUtil.getConfig("toolModel"));
         this.CHAT_CONFIG = ModelFactory.buildModelConfig(ConfigUtil.getConfig("chatModel"));
+        sessionService.loadSessions();
     }
 
     public GptSession initSession(String userName, String msg) {
@@ -106,7 +105,7 @@ public class GptService {
 
     public Object multiDialog(GptSession session, String userMsg) {
         RouterType router = router(session, userMsg);
-        System.out.println(router.name());
+        log.info(router.name());
         switch (router) {
             case TIME:
                 return textDialog(session, userMsg, true);
@@ -172,7 +171,6 @@ public class GptService {
                 Task taskAdd = host.schedule(shortName, userMsg + " \n当前时间: " + new Date());
                 if (taskAdd != null && taskAdd.getCronExpr() != null && !taskAdd.getCronExpr().isEmpty()) {
                     taskService.saveTask(session.getUserName(), taskAdd);
-                    System.out.println(new Gson().toJson(taskAdd));
                     return taskAdd.getCreatedTips();
                 }
                 return "创建失败";
@@ -225,12 +223,6 @@ public class GptService {
         return session;
     }
 
-    public GptService() {
-        this.TOOL_CONFIG = ModelFactory.buildModelConfig(ConfigUtil.getConfig("toolModel"));
-        this.CHAT_CONFIG = ModelFactory.buildModelConfig(ConfigUtil.getConfig("chatModel"));
-        sessionService.loadSessions();
-    }
-
     public static void main(String[] args) {
         System.out.println("DB url: jdbc:sqlite:" + DB_PATH);
         GptService gptService = new GptService();
@@ -243,16 +235,14 @@ public class GptService {
             }
             GptSession gptSession = gptService.initSession(userName, question);
             if (question.startsWith("\\admin")) {
-                log.info(new AdminService().handler(gptSession.getUserName(), question));
-                System.out.println();
+                log.info("\n" + new AdminService().handler(gptSession.getUserName(), question));
                 continue;
             }
             if (gptSession != null && gptSession.getLogin()) {
 //                System.out.println(gptService.router(gptSession, question));
 //                System.out.println(gptService.taskDialog(gptSession, question, RouterType.TASK_ADD));
-                System.out.println(gptService.multiDialog(gptSession, question));
+                System.out.println("\n" + gptService.multiDialog(gptSession, question));
             }
-            System.out.println();
         }
     }
 }
