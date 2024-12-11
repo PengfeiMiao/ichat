@@ -4,7 +4,7 @@ pid=$(jps | grep "wechat-bc" | awk '{print $1}')
 
 if [ -n "$pid" ]; then
     echo "Killing process with PID: $pid"
-    kill -9 "$pid"
+    kill -9 $pid
 else
     echo "Process not found."
 fi

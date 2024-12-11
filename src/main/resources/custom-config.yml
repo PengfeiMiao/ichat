@@ -11,8 +11,8 @@ models:
     type: "ollama"
     baseUrl: ""
     apiKey: ""
-toolModel: "qwen2.5:7b"
-chatModel: "qwen2.5:7b"
+toolModel: "gpt-3.5-turbo"
+chatModel: "gpt-3.5-turbo"
 adminPwd: "123456"
 ipSwitch: false
 ipUrls:

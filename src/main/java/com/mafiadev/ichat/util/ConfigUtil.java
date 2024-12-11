@@ -7,6 +7,8 @@ import com.google.gson.JsonObject;
 import org.jetbrains.annotations.NotNull;
 import org.yaml.snakeyaml.Yaml;
 
+import java.io.File;
+import java.io.FileReader;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,21 +18,45 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class ConfigUtil {
+    private static final String yamlFilePath = "custom-config.yml";
     private static final Gson gson = new Gson();
     private static JsonObject configJson = new JsonObject();
 
     static {
-        loadConfig();
+        loadDefaultConfig();
     }
 
-    private static void loadConfig() {
-        String yamlFilePath = "config.yml";
+    private static void loadDefaultConfig() {
         Yaml yaml = new Yaml();
-
         try (InputStream in = ConfigUtil.class.getClassLoader().getResourceAsStream(yamlFilePath)) {
             Map<String, Object> config = yaml.load(in);
             String json = gson.toJson(config);
             configJson = gson.fromJson(json, JsonObject.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void updateConfigJson(JsonObject oldJson, JsonObject newJson) {
+        for (String key : newJson.keySet()) {
+            JsonElement newVal = newJson.get(key);
+            if (oldJson.has(key) && oldJson.get(key).isJsonObject() && newVal.isJsonObject()) {
+                updateConfigJson(oldJson.getAsJsonObject(key), newVal.getAsJsonObject());
+            } else {
+                oldJson.add(key, newVal);
+            }
+        }
+    }
+
+    public static void loadCustomConfig(String pluginFolder) {
+        Yaml yaml = new Yaml();
+        String configFilePath = String.format("plugins/%s/%s", pluginFolder, yamlFilePath);
+        File configFile = new File(System.getProperty("user.dir"), configFilePath);
+        try (FileReader reader = new FileReader(configFile)) {
+            Map<String, Object> config = yaml.load(reader);
+            String json = gson.toJson(config);
+            JsonObject customConfigJson = gson.fromJson(json, JsonObject.class);
+            updateConfigJson(configJson, customConfigJson);
         } catch (Exception e) {
             e.printStackTrace();
         }
