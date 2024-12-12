@@ -3,7 +3,7 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
-group = 'com.mafiadev.com'
+group = 'com.mafiadev'
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = JavaVersion.VERSION_1_8
 
@@ -13,7 +13,6 @@ repositories {
     maven { url 'https://maven.aliyun.com/repository/gradle-plugin'}
     maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/'}
     maven { url 'https://repo.huaweicloud.com/repository/maven/'}
-    maven { url 'https://mirrors.tuna.tsinghua.edu.cn/repository/maven/'}
     mavenCentral()
 }
 
