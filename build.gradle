@@ -48,9 +48,9 @@ shadowJar {
     mergeServiceFiles()
 }
 
-tasks.register('copyJarToPlugins', Copy) {
+tasks.register('install', Copy) {
     from 'build/libs'
     into 'plugins'
     include '*-all.jar'
 }
-copyJarToPlugins.dependsOn shadowJar
+install.dependsOn shadowJar
