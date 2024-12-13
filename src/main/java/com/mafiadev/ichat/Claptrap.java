@@ -43,12 +43,16 @@ public class Claptrap extends BasePlugin {
                 });
             });
         };
+
+        String configKey = ConfigUtil.getConfig("api.key");
+        int port = ConfigUtil.getConfig("api.port", Integer.class);
+
         Javalin app = Javalin.create(javalinConfigConsumer)
                 .get("/", ctx -> ctx.result("Hello MafiaAI"))
-                .start("127.0.0.1", 8081);
+                .start("127.0.0.1", port);
         app.before(ctx -> {
             String apiKey = ctx.header("api-key");
-            if (apiKey == null || !apiKey.equals(ConfigUtil.getConfig("apiKey"))) {
+            if (apiKey == null || !apiKey.equals(configKey)) {
                 throw new UnauthorizedResponse();
             }
         });

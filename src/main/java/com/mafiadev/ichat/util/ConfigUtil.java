@@ -100,11 +100,15 @@ public class ConfigUtil {
                 .collect(Collectors.toList());
     }
 
-    public static String getConfig(@NotNull String key) {
-        List<String> list = getConfigArr(key);
-        if (list == null || list.size() == 0) {
-            return "";
+    public static <T> T getConfig(@NotNull String key, Class<T> clazz) {
+        List<T> list = getConfigArr(key, clazz);
+        if (list == null || list.isEmpty()) {
+            return null;
         }
         return list.get(0);
+    }
+
+    public static String getConfig(@NotNull String key) {
+        return getConfig(key, String.class);
     }
 }
