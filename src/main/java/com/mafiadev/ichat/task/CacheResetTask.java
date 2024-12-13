@@ -12,7 +12,7 @@ import static com.mafiadev.ichat.task.TaskTrigger.TASK_EXEC;
 public class CacheResetTask {
     public CacheResetTask() {
         Runnable task = () -> {
-            if (AdminService.INSTANCE != null && GptService.INSTANCE != null) {
+            if (AdminService.INSTANCE != null && GptService.getInstance() != null) {
                 AdminService.clear(new SessionService().getSessions(), new MessageService().getChatMemoryStore(), 0.5);
             }
         };

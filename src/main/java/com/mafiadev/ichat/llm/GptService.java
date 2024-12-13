@@ -42,9 +42,21 @@ import static com.mafiadev.ichat.constant.Constant.FILE_PATH;
 
 @Slf4j
 public class GptService {
-    public static GptService INSTANCE;
+    private static volatile GptService instance;
+
+    public static GptService getInstance() {
+        if (instance == null) {
+            synchronized (GptService.class) {
+                if (instance == null) {
+                    instance = new GptService();
+                }
+            }
+        }
+        return instance;
+    }
+
     public static void init() {
-        INSTANCE = new GptService();
+        instance = GptService.getInstance();
     }
 
     private final ModelConfig TOOL_CONFIG;
@@ -55,8 +67,8 @@ public class GptService {
     private final TaskService taskService = new TaskService();
 
     private GptService() {
-        this.TOOL_CONFIG = ModelFactory.buildModelConfig(ConfigUtil.getConfig("toolModel"));
-        this.CHAT_CONFIG = ModelFactory.buildModelConfig(ConfigUtil.getConfig("chatModel"));
+        TOOL_CONFIG = ModelFactory.buildModelConfig(ConfigUtil.getConfig("toolModel"));
+        CHAT_CONFIG = ModelFactory.buildModelConfig(ConfigUtil.getConfig("chatModel"));
         sessionService.loadSessions();
     }
 

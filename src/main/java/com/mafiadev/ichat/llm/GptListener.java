@@ -100,7 +100,8 @@ public class GptListener implements Listener {
             return;
         }
 
-        GptSession gptSession = GptService.INSTANCE.initSession(sessionId, content);
+        GptService gptService = GptService.getInstance();
+        GptSession gptSession = gptService.initSession(sessionId, content);
 
         if (senderUserName == null || gptSession == null) {
             return;
@@ -116,7 +117,7 @@ public class GptListener implements Listener {
         optionalRequest.ifPresent(request -> {
             String prompt = request.getPrompt();
             if (request.getAnswerType() == Request.AnswerType.TEXT) {
-                Object result = GptService.INSTANCE.multiDialog(gptSession, prompt);
+                Object result = gptService.multiDialog(gptSession, prompt);
                 if (result instanceof String) {
                     sendLongMessage(senderUserName, String.valueOf(result));
                 } else if (result instanceof File) {
@@ -129,7 +130,7 @@ public class GptListener implements Listener {
                     }
                 }
             } else {
-                File image = GptService.INSTANCE.imageDialog(gptSession, prompt);
+                File image = gptService.imageDialog(gptSession, prompt);
                 sender.sendImage(senderUserName, image);
             }
         });
