@@ -1,0 +1,23 @@
+version: '3.5'
+
+services:
+  nginx:
+    build: infra/nginx
+    ports:
+      - "8088:8088"
+    networks:
+      - mynetwork
+    depends_on:
+      - app
+  app:
+    build: ./
+    ports:
+      - "8081:8081"
+    networks:
+      - mynetwork
+    volumes:
+      - ./plugins/TestPlugin:/app/plugins/TestPlugin
+
+networks:
+  mynetwork:
+    driver: bridge

@@ -16,7 +16,7 @@ chatModel: "gpt-3.5-turbo"
 adminPwd: "123456"
 api:
   key: "123456"
-  port: 8088
+  port: 8081
 ipSwitch: false
 ipUrls:
   - https://www.proxy-list.download/api/v2/get?l=en&t=http
