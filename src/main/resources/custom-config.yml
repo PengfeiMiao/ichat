@@ -17,6 +17,7 @@ adminPwd: "123456"
 api:
   key: "123456"
   port: 8081
+  enabled: false
 ipSwitch: false
 ipUrls:
   - https://www.proxy-list.download/api/v2/get?l=en&t=http

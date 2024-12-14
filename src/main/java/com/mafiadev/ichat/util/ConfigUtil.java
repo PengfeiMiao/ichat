@@ -100,12 +100,16 @@ public class ConfigUtil {
                 .collect(Collectors.toList());
     }
 
-    public static <T> T getConfig(@NotNull String key, Class<T> clazz) {
+    public static <T> T getConfig(@NotNull String key, Class<T> clazz, T defaultValue) {
         List<T> list = getConfigArr(key, clazz);
         if (list == null || list.isEmpty()) {
-            return null;
+            return defaultValue;
         }
         return list.get(0);
+    }
+
+    public static <T> T getConfig(@NotNull String key, Class<T> clazz) {
+        return getConfig(key, clazz, null);
     }
 
     public static String getConfig(@NotNull String key) {

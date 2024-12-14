@@ -33,6 +33,9 @@ public class Claptrap extends BasePlugin {
     }
 
     private void startServer() {
+        if (!ConfigUtil.getConfig("api.enabled", Boolean.class, false)) {
+            return;
+        }
         Consumer<JavalinConfig> javalinConfigConsumer = config -> {
             config.jetty.modifyServer(server -> server.setStopTimeout(5_000));
             config.router.apiBuilder(() -> {
