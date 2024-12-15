@@ -18,6 +18,9 @@ api:
   enabled: false
   key: "123456"
   port: 8081
+tavily:
+  enabled: true
+  key: ""
 ipPool:
   enabled: false
   urls:

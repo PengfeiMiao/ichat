@@ -21,9 +21,22 @@ import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.embedding.EmbeddingModel;
+import dev.langchain4j.model.embedding.onnx.bgesmallenv15q.BgeSmallEnV15QuantizedEmbeddingModel;
 import dev.langchain4j.model.image.ImageModel;
+import dev.langchain4j.rag.DefaultRetrievalAugmentor;
+import dev.langchain4j.rag.RetrievalAugmentor;
+import dev.langchain4j.rag.content.retriever.ContentRetriever;
+import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
+import dev.langchain4j.rag.content.retriever.WebSearchContentRetriever;
+import dev.langchain4j.rag.query.router.DefaultQueryRouter;
+import dev.langchain4j.rag.query.router.QueryRouter;
 import dev.langchain4j.service.AiServices;
+import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
+import dev.langchain4j.web.search.WebSearchEngine;
+import dev.langchain4j.web.search.tavily.TavilyWebSearchEngine;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
@@ -112,7 +125,7 @@ public class GptService {
     public RouterType router(GptSession session, String userMsg) {
         ChatLanguageModel chatModel = session.getChatModel();
         Router router = AiServices.builder(Router.class).chatLanguageModel(chatModel).build();
-        return router.route(session.getShortName(), userMsg, RouterType.getAll());
+        return router.route(session.getShortName(), userMsg, RouterType.getDescriptions());
     }
 
     public Object multiDialog(GptSession session, String userMsg) {
@@ -121,6 +134,8 @@ public class GptService {
         switch (router) {
             case TIME:
                 return textDialog(session, userMsg, true);
+            case SEARCH:
+                return searchDialog(session, userMsg);
             case IMAGE:
                 return imageDialog(session, userMsg);
             case TASK_ADD:
@@ -137,6 +152,7 @@ public class GptService {
     public String textDialog(GptSession session, String userMsg, boolean useTool) {
         String result = "";
         ChatLanguageModel chatModel = useTool ? session.getToolModel() : session.getChatModel();
+        String[] extra = useTool ? new String[] {"当前时间: " + new Date()} : new String[0];
         String userName = session.getUserName();
         Assistant assistant = AiServices.builder(Assistant.class)
                 .chatLanguageModel(chatModel)
@@ -145,10 +161,10 @@ public class GptService {
                 .build();
         List<String> failureWords = Arrays.asList("抱歉", "由于网络问题", "请稍后再尝试");
         try {
-            result = assistant.chat(session.getShortName(), userMsg);
+            result = assistant.chat(session.getShortName(), userMsg, extra);
         } catch (Exception e) {
             try {
-                result = chatModel.generate(
+                result = session.getChatModel().generate(
                         SystemMessage.from(
                                 "IF USER INPUT `请求最新信息` OR INPUT `请求使用搜索引擎` AND CONDITION TOOL `查询失败`\n" +
                                         "ELSE YOU OUTPUT `" + String.join("`, `", failureWords) +
@@ -187,6 +203,37 @@ public class GptService {
                 }
                 return "创建失败";
         }
+    }
+
+    public String searchDialog(GptSession session, String userMsg) {
+        EmbeddingModel embeddingModel = new BgeSmallEnV15QuantizedEmbeddingModel();
+        InMemoryEmbeddingStore<TextSegment> embeddingStore = new InMemoryEmbeddingStore<>();
+        ContentRetriever embeddingStoreContentRetriever = EmbeddingStoreContentRetriever.builder()
+                .embeddingStore(embeddingStore)
+                .embeddingModel(embeddingModel)
+                .maxResults(2)
+                .minScore(0.6)
+                .build();
+        WebSearchEngine webSearchEngine = TavilyWebSearchEngine.builder()
+                .apiKey(ConfigUtil.getConfig("tavily.key")) // get a free key: https://app.tavily.com/sign-in
+                .build();
+        ContentRetriever webSearchContentRetriever = WebSearchContentRetriever.builder()
+                .webSearchEngine(webSearchEngine)
+                .maxResults(3)
+                .build();
+        QueryRouter queryRouter = new DefaultQueryRouter(embeddingStoreContentRetriever, webSearchContentRetriever);
+        RetrievalAugmentor retrievalAugmentor = DefaultRetrievalAugmentor.builder()
+                .queryRouter(queryRouter)
+                .build();
+
+        ChatLanguageModel chatModel = session.getChatModel();
+        String userName = session.getUserName();
+        Assistant assistant = AiServices.builder(Assistant.class)
+                .chatLanguageModel(chatModel)
+                .retrievalAugmentor(retrievalAugmentor)
+                .chatMemoryProvider(memoryId -> messageService.buildChatMemory(userName))
+                .build();
+        return assistant.chat(session.getShortName(), userMsg);
     }
 
     public File imageDialog(GptSession session, String userMsg) {

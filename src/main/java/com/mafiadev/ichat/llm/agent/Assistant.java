@@ -1,9 +1,6 @@
 package com.mafiadev.ichat.llm.agent;
 
-import dev.langchain4j.service.MemoryId;
-import dev.langchain4j.service.SystemMessage;
-import dev.langchain4j.service.UserMessage;
-import dev.langchain4j.service.UserName;
+import dev.langchain4j.service.*;
 
 public interface Assistant {
 
@@ -20,7 +17,8 @@ public interface Assistant {
                     "2) \\gpt end: 结束会话\n" +
                     "3) \\gpt clear: 清空会话记录\n" +
                     "4) #image + 文本: 图片生成请求，需要在会话中执行才可生效\n" +
-                    "```"
+                    "```",
+            "附加信息: {{extra}}"
     })
-    String chat(@MemoryId @UserName String userName, @UserMessage String message);
+    String chat(@MemoryId @UserName String userName, @UserMessage String message, @V("extra") String... info);
 }
