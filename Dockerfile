@@ -3,9 +3,8 @@ FROM openjdk:11.0.11-slim
 # 作者信息
 MAINTAINER pengfei.miao pengfei.miao@thoughtworks.com
 
-WORKDIR /usr/local/src
+WORKDIR /home/ichat
 
-RUN apt-get update && apt-get install -y curl
 COPY libs/ ./libs/
 COPY plugins/ ./plugins/
 RUN mkdir -p ./plugins/TestPlugin

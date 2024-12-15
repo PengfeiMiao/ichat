@@ -15,7 +15,7 @@ import static com.mafiadev.ichat.task.TaskTrigger.TASK_EXEC;
 @Slf4j
 public class IpPoolRefreshTask {
     public IpPoolRefreshTask() {
-        if(!Objects.equals(ConfigUtil.getConfig("ipSwitch"), "true")) {
+        if(!ConfigUtil.getConfig("ipPool.enabled", Boolean.class, false)) {
             return;
         }
 

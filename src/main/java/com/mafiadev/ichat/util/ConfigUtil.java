@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.mafiadev.ichat.constant.Constant;
 import org.jetbrains.annotations.NotNull;
 import org.yaml.snakeyaml.Yaml;
 
@@ -51,7 +52,7 @@ public class ConfigUtil {
     public static void loadCustomConfig(String pluginFolder) {
         Yaml yaml = new Yaml();
         String configFilePath = String.format("plugins/%s/%s", pluginFolder, yamlFilePath);
-        File configFile = new File(System.getProperty("user.dir"), configFilePath);
+        File configFile = new File(Constant.USER_DIR, configFilePath);
         try (FileReader reader = new FileReader(configFile)) {
             Map<String, Object> config = yaml.load(reader);
             String json = gson.toJson(config);

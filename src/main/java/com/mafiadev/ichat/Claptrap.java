@@ -37,7 +37,7 @@ public class Claptrap extends BasePlugin {
             return;
         }
         Consumer<JavalinConfig> javalinConfigConsumer = config -> {
-            config.jetty.modifyServer(server -> server.setStopTimeout(5_000));
+            config.jetty.modifyServer(server -> server.setStopTimeout(3000L));
             config.router.apiBuilder(() -> {
                 ApiBuilder.path("/mafia-ai", () -> {
                     ApiBuilder.path("/completions", () -> {
@@ -52,7 +52,7 @@ public class Claptrap extends BasePlugin {
 
         Javalin app = Javalin.create(javalinConfigConsumer)
                 .get("/", ctx -> ctx.result("Hello MafiaAI"))
-                .start("127.0.0.1", port);
+                .start("0.0.0.0", port);
         app.before(ctx -> {
             String apiKey = ctx.header("api-key");
             if (apiKey == null || !apiKey.equals(configKey)) {

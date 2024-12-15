@@ -28,7 +28,7 @@ import static com.mafiadev.ichat.constant.Constant.FILE_PATH;
 public class IpPoolCrawler {
     private static final Path ipPoolPath = Paths.get(FILE_PATH.toString(), "ip_pool.json");
     private static final int timeout = 1000;
-    private static final List<String> urls = ConfigUtil.getConfigArr("ipUrls");
+    private static final List<String> urls = ConfigUtil.getConfigArr("ipPool.urls");
     private static final Gson gson = new Gson();
 
     private boolean checkHealth(IpPort ipPort) {
