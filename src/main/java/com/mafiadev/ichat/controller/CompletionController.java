@@ -17,7 +17,8 @@ public class CompletionController {
 
     public static void completions(@NotNull Context ctx) {
         String message = ctx.bodyValidator(TextMessage.class)
-                .check(obj -> obj.getMessage() != null, "message must not be null")
+                .check(obj -> obj.getMessage() != null && !obj.getMessage().isEmpty(),
+                        "message must not be empty")
                 .get().getMessage();
         String sessionId = Optional.ofNullable(ctx.cookie("session-id")).orElse("");
 
