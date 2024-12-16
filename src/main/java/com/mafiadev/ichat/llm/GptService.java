@@ -45,6 +45,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -125,7 +126,19 @@ public class GptService {
     public RouterType router(GptSession session, String userMsg) {
         ChatLanguageModel chatModel = session.getChatModel();
         Router router = AiServices.builder(Router.class).chatLanguageModel(chatModel).build();
-        return router.route(session.getShortName(), userMsg, RouterType.getDescriptions());
+        try {
+            return router.route(session.getShortName(), userMsg, RouterType.getDescriptions());
+        } catch (Exception e) {
+            String message = e.getMessage();
+            if (message != null && message.contains("Unknown enum value")) {
+                Optional<RouterType> typeOptional = Arrays.stream(RouterType.values())
+                        .filter(it -> message.contains(it.name())).findAny();
+                if(typeOptional.isPresent()) {
+                    return typeOptional.get();
+                }
+            }
+        }
+        return RouterType.OTHER;
     }
 
     public Object multiDialog(GptSession session, String userMsg) {

@@ -31,7 +31,7 @@ public enum RouterType {
 
     @Getter
     private static final Map<String, String> descriptions = Arrays.stream(values())
-                .collect(Collectors.toMap(Enum::name, RouterType::getDescription));
+                .collect(Collectors.toMap(RouterType::name, RouterType::getDescription));
 
     private static String getDescription(RouterType routerType) {
         try {
