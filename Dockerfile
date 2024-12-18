@@ -1,8 +1,5 @@
 FROM openjdk:11.0.11-slim
 
-# 作者信息
-MAINTAINER pengfei.miao pengfei.miao@thoughtworks.com
-
 WORKDIR /home/ichat
 
 COPY libs/ ./libs/

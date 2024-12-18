@@ -1,9 +1,6 @@
 # FROM命令定义构建镜像的基础镜像，必须是Dockerfile的首个命令
 FROM nginx:latest
 
-# 作者信息
-MAINTAINER pengfei.miao pengfei.miao@thoughtworks.com
-
 WORKDIR /usr/local
 
 # 将本地文件添加到容器中
