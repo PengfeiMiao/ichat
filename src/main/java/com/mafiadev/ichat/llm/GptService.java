@@ -1,10 +1,10 @@
 package com.mafiadev.ichat.llm;
 
-import com.mafiadev.ichat.constant.GlobalThreadPool;
 import com.mafiadev.ichat.llm.admin.AdminService;
 import com.mafiadev.ichat.llm.agent.Assistant;
 import com.mafiadev.ichat.llm.agent.Router;
 import com.mafiadev.ichat.llm.agent.TaskHost;
+import com.mafiadev.ichat.llm.rag.RetrieverFactory;
 import com.mafiadev.ichat.llm.tool.WebPageTool;
 import com.mafiadev.ichat.model.GptSession;
 import com.mafiadev.ichat.model.ModelConfig;
@@ -21,22 +21,14 @@ import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.chat.ChatLanguageModel;
-import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.model.embedding.onnx.bgesmallenv15q.BgeSmallEnV15QuantizedEmbeddingModel;
 import dev.langchain4j.model.image.ImageModel;
 import dev.langchain4j.rag.DefaultRetrievalAugmentor;
 import dev.langchain4j.rag.RetrievalAugmentor;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
-import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
-import dev.langchain4j.rag.content.retriever.WebSearchContentRetriever;
 import dev.langchain4j.rag.query.router.DefaultQueryRouter;
 import dev.langchain4j.rag.query.router.QueryRouter;
 import dev.langchain4j.service.AiServices;
-import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
-import dev.langchain4j.web.search.WebSearchEngine;
-import dev.langchain4j.web.search.tavily.TavilyWebSearchEngine;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
@@ -53,6 +45,7 @@ import java.util.stream.IntStream;
 
 import static com.mafiadev.ichat.constant.Constant.DB_PATH;
 import static com.mafiadev.ichat.constant.Constant.FILE_PATH;
+import static com.mafiadev.ichat.constant.GlobalThreadPool.CACHED_EXECUTOR;
 
 @Slf4j
 public class GptService {
@@ -219,24 +212,15 @@ public class GptService {
     }
 
     public String searchDialog(GptSession session, String userMsg) {
-        EmbeddingModel embeddingModel = new BgeSmallEnV15QuantizedEmbeddingModel();
-        InMemoryEmbeddingStore<TextSegment> embeddingStore = new InMemoryEmbeddingStore<>();
-        ContentRetriever embeddingStoreContentRetriever = EmbeddingStoreContentRetriever.builder()
-                .embeddingStore(embeddingStore)
-                .embeddingModel(embeddingModel)
-                .maxResults(2)
-                .minScore(0.6)
-                .build();
-        WebSearchEngine webSearchEngine = TavilyWebSearchEngine.builder()
-                .apiKey(ConfigUtil.getConfig("tavily.key")) // get a free key: https://app.tavily.com/sign-in
-                .build();
-        ContentRetriever webSearchContentRetriever = WebSearchContentRetriever.builder()
-                .webSearchEngine(webSearchEngine)
-                .maxResults(3)
-                .build();
-        QueryRouter queryRouter = new DefaultQueryRouter(embeddingStoreContentRetriever, webSearchContentRetriever);
+        ContentRetriever embeddingStoreContentRetriever = RetrieverFactory.buildEmbeddingStoreContentRetriever();
+        ContentRetriever webSearchContentRetriever = RetrieverFactory.buildWebSearchContentRetriever();
+        QueryRouter queryRouter = new DefaultQueryRouter(
+                embeddingStoreContentRetriever,
+                webSearchContentRetriever
+        );
         RetrievalAugmentor retrievalAugmentor = DefaultRetrievalAugmentor.builder()
                 .queryRouter(queryRouter)
+                .executor(CACHED_EXECUTOR)
                 .build();
 
         ChatLanguageModel chatModel = session.getChatModel();
@@ -257,7 +241,7 @@ public class GptService {
     }
 
     private void filterNoise(GptSession session, List<String> keywords) {
-        GlobalThreadPool.CACHED_EXECUTOR.submit(() -> {
+        CACHED_EXECUTOR.submit(() -> {
             List<ChatMessage> chatMessages = messageService.getMessages(session.getUserName());
             List<Integer> intervals = IntStream.range(0, chatMessages.size())
                     .filter(i -> chatMessages.get(i) instanceof UserMessage)
@@ -297,6 +281,7 @@ public class GptService {
 
     public static void main(String[] args) {
         System.out.println("DB url: jdbc:sqlite:" + DB_PATH);
+        ConfigUtil.loadCustomConfig("TestPlugin");
         GptService gptService = new GptService();
         String userName = "ODM2MzUyNDkxJm1hZmlhMjMzJiY4MzYzNDkzNzMmTVBG";
         Scanner scanner = new Scanner(System.in);

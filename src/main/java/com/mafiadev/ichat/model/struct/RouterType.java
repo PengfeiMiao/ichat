@@ -8,10 +8,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public enum RouterType {
-    @Description("时间、日期类信息 或 查询微博热搜")
+    @Description("时间、日期类信息")
     TIME,
 
-    @Description("天气、新闻热点等实时信息 或 要求使用搜索引擎查询")
+    @Description("天气、新闻、微博热搜等实时信息 或 明确要求使用搜索引擎查询")
     SEARCH,
 
     @Description("以 #image 开头、绘画 或 生成图片")

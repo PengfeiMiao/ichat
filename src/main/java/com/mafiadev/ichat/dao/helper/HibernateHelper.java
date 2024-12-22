@@ -1,8 +1,6 @@
 package com.mafiadev.ichat.dao.helper;
 
 import com.mafiadev.ichat.constant.Constant;
-import com.mafiadev.ichat.entity.MessageEntity;
-import com.mafiadev.ichat.entity.SessionEntity;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 import org.reflections.Reflections;
@@ -11,7 +9,7 @@ import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
 import javax.persistence.Table;
-import java.util.Set;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.mafiadev.ichat.dao.helper.SqliteHelper.validate;
@@ -26,13 +24,13 @@ public class HibernateHelper {
             synchronized (HibernateHelper.class) {
                 if (sessionFactory == null || sessionFactory.isClosed()) {
                     Configuration configuration = new Configuration().configure("hibernate.cfg.xml");
-                    // Add your entity classes
-                    configuration.addAnnotatedClass(SessionEntity.class);
-                    configuration.addAnnotatedClass(MessageEntity.class);
+                    Map<String, Class<?>> scannedTables = scanTables();
+                    // Add entity classes
+                    scannedTables.values().forEach(configuration::addAnnotatedClass);
                     // Configure other Hibernate properties
                     configuration.setProperty("hibernate.connection.url", "jdbc:sqlite:" + Constant.DB_PATH);
                     String hbm2ddlMethod = "hibernate.hbm2ddl.auto";
-                    if (!validate(scanTables()) && configuration.getProperty(hbm2ddlMethod).equals("validate")) {
+                    if (!validate(scannedTables.keySet()) && configuration.getProperty(hbm2ddlMethod).equals("validate")) {
                         configuration.setProperty(hbm2ddlMethod, "update");
                     } else {
                         configuration.setProperty(hbm2ddlMethod, "validate");
@@ -46,7 +44,7 @@ public class HibernateHelper {
         return sessionFactory;
     }
 
-    private static Set<String> scanTables() {
+    private static Map<String, Class<?>> scanTables() {
         // 创建 Reflections 实例，指定扫描的包路径和扫描器
         Reflections reflections = new Reflections(new ConfigurationBuilder()
                 .setUrls(ClasspathHelper.forPackage(packagePath))
@@ -55,7 +53,10 @@ public class HibernateHelper {
         // 获取带有@Table注解的类
         return reflections.getTypesAnnotatedWith(Table.class)
                 .stream()
-                .map(it -> it.getAnnotation(Table.class).name())
-                .collect(Collectors.toSet());
+                .collect(Collectors.toMap(
+                        it -> it.getAnnotation(Table.class).name(),
+                        it -> it,
+                        (_old, _new) -> _old
+                ));
     }
 }

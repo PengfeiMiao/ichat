@@ -16,10 +16,10 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mafiadev.ichat.task.TaskTrigger.TASK_EXEC;
 
-public class ScheduledTask {
+public class SchedulerTrigger {
     private final TaskService taskService = new TaskService();
 
-    public ScheduledTask(Claptrap plugin) {
+    public SchedulerTrigger(Claptrap plugin) {
         HttpAPI sender = plugin.getWeChatClient().getWeChatCore().getHttpAPI();
         ContactManager contactManager = plugin.getWeChatClient().getContactManager();
 

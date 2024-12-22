@@ -10,6 +10,7 @@ public class TaskTrigger {
     public TaskTrigger() {
         new CacheResetTask();
         new IpPoolRefreshTask();
+        new RagRefreshTask();
     }
 
     public static void main(String[] args) {
