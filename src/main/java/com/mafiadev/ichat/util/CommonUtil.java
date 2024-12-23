@@ -54,7 +54,7 @@ public class CommonUtil {
 
         for (int i = 0; i < words.length; i++) {
             String word = words[i];
-            if (i > 0 && word.length() > 0) {
+            if (i > 0 && !word.isEmpty()) {
                 word = Character.toUpperCase(word.charAt(0)) + word.substring(1);
             }
             result.append(word);
@@ -140,6 +140,7 @@ public class CommonUtil {
         }
     }
 
+    @SuppressWarnings("ALL")
     public static <T> T getFieldValue(@NotNull Object object, String fieldName, Class<T> targetClz) {
         Class<?> myClass = object.getClass();
         Field privateField;

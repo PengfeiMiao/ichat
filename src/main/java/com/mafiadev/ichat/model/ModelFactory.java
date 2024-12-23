@@ -3,9 +3,11 @@ package com.mafiadev.ichat.model;
 import com.mafiadev.ichat.util.CommonUtil;
 import com.mafiadev.ichat.util.ConfigUtil;
 import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.image.ImageModel;
 import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiImageModel;
 
 import java.util.ArrayList;
@@ -14,6 +16,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static com.mafiadev.ichat.constant.Constant.FILE_PATH;
+import static dev.langchain4j.model.openai.OpenAiEmbeddingModelName.TEXT_EMBEDDING_3_SMALL;
 
 public class ModelFactory {
     public static ModelConfig buildModelConfig(String name) {
@@ -63,6 +66,14 @@ public class ModelFactory {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static EmbeddingModel buildEmbeddingModel(ModelConfig modelConfig) {
+        return new OpenAiEmbeddingModel.OpenAiEmbeddingModelBuilder()
+                .baseUrl(modelConfig.getBaseUrl())
+                .apiKey(modelConfig.getApiKey())
+                .modelName(TEXT_EMBEDDING_3_SMALL)
+                .build();
     }
 
     public static String buildModelName(Object model) {

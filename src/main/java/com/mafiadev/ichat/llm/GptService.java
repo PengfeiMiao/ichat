@@ -142,7 +142,6 @@ public class GptService {
             case TIME:
                 return textDialog(session, userMsg, true);
             case WEIBO:
-                return searchDialog(session, userMsg, false);
             case SEARCH:
                 return searchDialog(session, userMsg, true);
             case IMAGE:

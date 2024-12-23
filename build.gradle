@@ -18,17 +18,26 @@ repositories {
 
 apply from: "${rootProject.projectDir}/gradle/git-hooks.gradle"
 
+configurations.configureEach {
+    resolutionStrategy {
+        eachDependency { DependencyResolveDetails details ->
+            if (details.requested.group == 'dev.langchain4j') {
+                details.useVersion '0.35.0'
+            }
+        }
+    }
+}
+
 dependencies {
-    implementation 'dev.langchain4j:langchain4j-open-ai:0.35.0'
-    implementation 'dev.langchain4j:langchain4j-ollama:0.35.0'
-    implementation 'dev.langchain4j:langchain4j:0.35.0'
-	implementation 'dev.langchain4j:langchain4j-easy-rag:0.35.0'
-    implementation 'dev.langchain4j:langchain4j-web-search-engine-tavily:0.35.0'
-    implementation 'dev.langchain4j:langchain4j-embeddings-bge-small-en-v15-q:0.35.0'
+    implementation 'dev.langchain4j:langchain4j'
+    implementation 'dev.langchain4j:langchain4j-open-ai'
+    implementation 'dev.langchain4j:langchain4j-ollama'
+    implementation 'dev.langchain4j:langchain4j-easy-rag'
+    implementation 'dev.langchain4j:langchain4j-web-search-engine-tavily'
 
     implementation files('./libs/wechat-bc-1.1.9-SNAPSHOT.jar')
 
-    implementation 'io.javalin:javalin:6.3.0'
+    implementation 'io.javalin:javalin:6.4.0'
     implementation 'org.slf4j:slf4j-reload4j:2.0.16'
     implementation 'org.apache.commons:commons-text:1.11.0'
     implementation 'org.yaml:snakeyaml:2.0'
@@ -40,8 +49,6 @@ dependencies {
     implementation 'com.github.gwenn:sqlite-dialect:0.1.0'
     implementation 'org.quartz-scheduler:quartz:2.3.2'
     implementation 'org.jsoup:jsoup:1.18.1'
-    implementation 'com.google.code.gson:gson:2.11.0'
-    implementation 'ai.djl.huggingface:tokenizers:0.28.0'
 
     compileOnly 'org.projectlombok:lombok:1.18.34'
     annotationProcessor 'org.projectlombok:lombok:1.18.34'

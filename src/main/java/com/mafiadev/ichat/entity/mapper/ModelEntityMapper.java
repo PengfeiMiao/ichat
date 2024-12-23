@@ -29,6 +29,7 @@ import static com.mafiadev.ichat.entity.mapper.MessageType.of;
 public interface ModelEntityMapper {
     ModelEntityMapper MAPPER = Mappers.getMapper(ModelEntityMapper.class);
 
+    @SuppressWarnings("ALL")
     default List<MessageEntity> convertChatMessagesToEntities(String userName, List<ChatMessage> chatMessages) {
         return chatMessages.stream()
                 .map(message -> MessageEntity.builder()
