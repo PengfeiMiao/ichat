@@ -33,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
@@ -140,8 +141,10 @@ public class GptService {
         switch (router) {
             case TIME:
                 return textDialog(session, userMsg, true);
+            case WEIBO:
+                return searchDialog(session, userMsg, false);
             case SEARCH:
-                return searchDialog(session, userMsg);
+                return searchDialog(session, userMsg, true);
             case IMAGE:
                 return imageDialog(session, userMsg);
             case TASK_ADD:
@@ -211,13 +214,14 @@ public class GptService {
         }
     }
 
-    public String searchDialog(GptSession session, String userMsg) {
-        ContentRetriever embeddingStoreContentRetriever = RetrieverFactory.buildEmbeddingStoreContentRetriever();
-        ContentRetriever webSearchContentRetriever = RetrieverFactory.buildWebSearchContentRetriever();
-        QueryRouter queryRouter = new DefaultQueryRouter(
-                embeddingStoreContentRetriever,
-                webSearchContentRetriever
-        );
+    public String searchDialog(GptSession session, String userMsg, boolean useWebSearch) {
+        int maxResult = useWebSearch ? 3 : 10;
+        List<ContentRetriever> contentRetrievers = new ArrayList<>();
+        contentRetrievers.add(RetrieverFactory.buildEmbeddingStoreContentRetriever(maxResult));
+        if (useWebSearch) {
+            contentRetrievers.add(RetrieverFactory.buildWebSearchContentRetriever(maxResult));
+        }
+        QueryRouter queryRouter = new DefaultQueryRouter(contentRetrievers);
         RetrievalAugmentor retrievalAugmentor = DefaultRetrievalAugmentor.builder()
                 .queryRouter(queryRouter)
                 .executor(CACHED_EXECUTOR)
@@ -279,9 +283,9 @@ public class GptService {
         return session;
     }
 
-    public static void main(String[] args) {
+    public static void test() {
         System.out.println("DB url: jdbc:sqlite:" + DB_PATH);
-        ConfigUtil.loadCustomConfig("TestPlugin");
+//        ConfigUtil.loadCustomConfig("TestPlugin");
         GptService gptService = new GptService();
         String userName = "ODM2MzUyNDkxJm1hZmlhMjMzJiY4MzYzNDkzNzMmTVBG";
         Scanner scanner = new Scanner(System.in);
@@ -296,8 +300,6 @@ public class GptService {
                 continue;
             }
             if (gptSession != null && gptSession.getLogin()) {
-//                System.out.println(gptService.router(gptSession, question));
-//                System.out.println(gptService.taskDialog(gptSession, question, RouterType.TASK_ADD));
                 System.out.println("\n" + gptService.multiDialog(gptSession, question));
             }
         }

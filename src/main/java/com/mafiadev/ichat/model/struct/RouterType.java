@@ -11,6 +11,9 @@ public enum RouterType {
     @Description("时间、日期类信息")
     TIME,
 
+    @Description("微博热搜")
+    WEIBO,
+
     @Description("天气、新闻、微博热搜等实时信息 或 明确要求使用搜索引擎查询")
     SEARCH,
 

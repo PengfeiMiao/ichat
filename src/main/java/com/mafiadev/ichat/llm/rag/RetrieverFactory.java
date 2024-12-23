@@ -20,19 +20,19 @@ public class RetrieverFactory {
                 .build();
     }
 
-    public static ContentRetriever buildEmbeddingStoreContentRetriever() {
+    public static ContentRetriever buildEmbeddingStoreContentRetriever(int maxResult) {
         return EmbeddingStoreContentRetriever.builder()
                 .embeddingStore(CachedEmbeddingStore.getInstance())
                 .embeddingModel(buildEmbeddingModel())
-                .maxResults(2)
+                .maxResults(maxResult)
                 .minScore(0.6)
                 .build();
     }
 
-    public static ContentRetriever buildWebSearchContentRetriever() {
+    public static ContentRetriever buildWebSearchContentRetriever(int maxResult) {
         return WebSearchContentRetriever.builder()
                 .webSearchEngine(buildWebSearchEngine())
-                .maxResults(3)
+                .maxResults(maxResult)
                 .build();
     }
 }

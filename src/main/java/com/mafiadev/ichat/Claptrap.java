@@ -3,6 +3,7 @@ package com.mafiadev.ichat;
 import com.mafiadev.ichat.constant.Constant;
 import com.mafiadev.ichat.controller.CompletionController;
 import com.mafiadev.ichat.llm.GptListener;
+import com.mafiadev.ichat.llm.GptService;
 import com.mafiadev.ichat.task.SchedulerTrigger;
 import com.mafiadev.ichat.task.TaskTrigger;
 import com.mafiadev.ichat.util.ConfigUtil;
@@ -59,5 +60,12 @@ public class Claptrap extends BasePlugin {
                 throw new UnauthorizedResponse();
             }
         });
+    }
+
+    public static void main(String[] args) {
+        FileUtil.mkDir(Constant.FILE_PATH);
+        new TaskTrigger();
+        ConfigUtil.loadCustomConfig("TestPlugin");
+        GptService.test();
     }
 }
