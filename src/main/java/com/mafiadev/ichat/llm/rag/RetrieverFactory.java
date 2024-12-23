@@ -18,7 +18,7 @@ public class RetrieverFactory {
     }
 
     public static ContentRetriever buildEmbeddingStoreContentRetriever(int maxResult) {
-        ModelConfig modelConfig = ModelFactory.buildModelConfig(ConfigUtil.getConfig("chatModel"));
+        ModelConfig modelConfig = ModelFactory.buildModelConfig(ConfigUtil.getConfig("embeddingModel"));
         EmbeddingModel model = ModelFactory.buildEmbeddingModel(modelConfig);
         return EmbeddingStoreContentRetriever.builder()
                 .embeddingStore(CachedEmbeddingStore.getInstance())

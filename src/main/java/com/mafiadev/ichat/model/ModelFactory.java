@@ -69,11 +69,21 @@ public class ModelFactory {
     }
 
     public static EmbeddingModel buildEmbeddingModel(ModelConfig modelConfig) {
-        return new OpenAiEmbeddingModel.OpenAiEmbeddingModelBuilder()
-                .baseUrl(modelConfig.getBaseUrl())
-                .apiKey(modelConfig.getApiKey())
-                .modelName(TEXT_EMBEDDING_3_SMALL)
-                .build();
+        if (modelConfig == null) {
+            return null;
+        }
+        try {
+            if ("openai".equals(modelConfig.getType())) {
+                return new OpenAiEmbeddingModel.OpenAiEmbeddingModelBuilder()
+                        .baseUrl(modelConfig.getBaseUrl())
+                        .apiKey(modelConfig.getApiKey())
+                        .modelName(TEXT_EMBEDDING_3_SMALL)
+                        .build();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public static String buildModelName(Object model) {

@@ -13,6 +13,7 @@ models:
     apiKey: ""
 toolModel: "gpt-3.5-turbo"
 chatModel: "gpt-3.5-turbo"
+embeddingModel: "gpt-3.5-turbo"
 adminPwd: "123456"
 api:
   enabled: false
