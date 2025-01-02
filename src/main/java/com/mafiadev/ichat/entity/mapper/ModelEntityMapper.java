@@ -46,7 +46,6 @@ public interface ModelEntityMapper {
                 .collect(Collectors.toList());
     }
 
-    @Mapping(target = "userName", source = "userName")
     @Mapping(target = "chatModel", expression = "java(serializeChatModel(session.getChatModel()))")
     @Mapping(target = "imageModel", expression = "java(serializeImageModel(session.getImageModel()))")
     @Mapping(target = "toolModel", expression = "java(serializeChatModel(session.getToolModel()))")

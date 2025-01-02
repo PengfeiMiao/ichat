@@ -33,9 +33,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -160,7 +160,7 @@ public class GptService {
     public String textDialog(GptSession session, String userMsg, boolean useTool) {
         String result = "";
         ChatLanguageModel chatModel = useTool ? session.getToolModel() : session.getChatModel();
-        String[] extra = useTool ? new String[] {"当前时间: " + new Date()} : new String[0];
+        String[] extra = useTool ? new String[] {"当前时间: " + LocalDateTime.now()} : new String[0];
         String userName = session.getUserName();
         Assistant assistant = AiServices.builder(Assistant.class)
                 .chatLanguageModel(chatModel)
@@ -196,7 +196,7 @@ public class GptService {
                 return host.list(shortName, taskService.findTasks(session.getUserName()));
             case TASK_DEL:
                 List<Task> tasks = taskService.findTasks(session.getUserName());
-                Task taskDel = host.delete(shortName, tasks, userMsg + " \n当前时间: " + new Date());
+                Task taskDel = host.delete(shortName, tasks, userMsg + " \n当前时间: " + LocalDateTime.now());
                 if (!taskDel.getCronExpr().isEmpty() && !taskDel.getContent().isEmpty()) {
                     tasks.removeIf(it ->
                             it.getCronExpr().equals(taskDel.getCronExpr()) || it.getContent().equals(taskDel.getContent()));
@@ -204,7 +204,7 @@ public class GptService {
                 }
                 return taskDel.getCreatedTips();
             default:
-                Task taskAdd = host.schedule(shortName, userMsg + " \n当前时间: " + new Date());
+                Task taskAdd = host.schedule(shortName, userMsg + " \n当前时间: " + LocalDateTime.now());
                 if (taskAdd != null && taskAdd.getCronExpr() != null && !taskAdd.getCronExpr().isEmpty()) {
                     taskService.saveTask(session.getUserName(), taskAdd);
                     return taskAdd.getCreatedTips();
@@ -274,6 +274,7 @@ public class GptService {
         ChatLanguageModel chatModel = ModelFactory.buildChatModel(CHAT_CONFIG);
         ChatLanguageModel gpt4Model = ModelFactory.buildChatModel(TOOL_CONFIG);
 
+        // TODO: hard code for ImageModel
         ModelConfig imageConfig = ModelFactory.buildModelConfig("gpt-4o-mini");
         imageConfig.setName("dall-e-2");
         ImageModel imageModel = ModelFactory.buildImageModel(imageConfig);

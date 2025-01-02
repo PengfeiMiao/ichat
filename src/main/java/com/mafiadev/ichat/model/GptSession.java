@@ -28,6 +28,7 @@ public class GptSession {
 
     public void reset(String tips) {
         this.setChatModel(null);
+        this.setToolModel(null);
         this.setImageModel(null);
         this.setToolModel(null);
         this.setLogin(false);

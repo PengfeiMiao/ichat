@@ -8,6 +8,7 @@ import com.mafiadev.ichat.task.SchedulerTrigger;
 import com.mafiadev.ichat.task.TaskTrigger;
 import com.mafiadev.ichat.util.ConfigUtil;
 import com.mafiadev.ichat.util.FileUtil;
+import com.mafiadev.ichat.util.SessionUtil;
 import com.meteor.wechatbc.impl.plugin.BasePlugin;
 import io.javalin.Javalin;
 import io.javalin.apibuilder.ApiBuilder;
@@ -59,6 +60,7 @@ public class Claptrap extends BasePlugin {
             if (apiKey == null || !apiKey.equals(configKey)) {
                 throw new UnauthorizedResponse();
             }
+            SessionUtil.refresh(ctx);
         });
     }
 
